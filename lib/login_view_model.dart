@@ -1,208 +1,216 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:management_school/repo/repo.dart';
-import 'package:management_school/utils/utils.dart';
+import 'package:http/http.dart' as http;
 
 import 'controller/enquiry_page_controller.dart';
 import 'controller/login_page_controller.dart';
 import 'infrastructures/routes/page_constants.dart';
 import 'local_storage/local_storage.dart';
 import 'local_storage/pref_const.dart';
-import 'models/birthdaycardmodel.dart';
 import 'models/enquiry_post_model.dart';
 import 'models/login_model.dart';
 import 'models/view_student_model.dart';
-
-
+import 'repo/repo.dart';
+import 'utils/utils.dart';
 
 class LoginViewModel with ChangeNotifier {
-  final myRepo = LoginRepository();
-  final enquiryRepo = EnquiryRepository();
-  final controller = Get.find<LogInPageController>();
+  final LoginRepository myRepo = LoginRepository();
+  final EnquiryRepository enquiryRepo = EnquiryRepository();
+  final LogInPageController controller = Get.find<LogInPageController>();
 
-  Future<void> loginApi(dynamic data, url) async {
-    controller.isLoading.value = true;
-    myRepo.loginApi(data: data, baseUrl: url).then((value) async {
-      var data = Login_Model.fromJson(value);
-      if(data.data!.action == "0"){
-        PrefManager().clearPref();
-        ShortMessage.toast(title: "Cannot Login User is In-active");
-        Get.offNamed(
-          RouteName.login_screen,
-        );
-      }else {
-        if (kDebugMode) {
-          print(
-              "data is in post method and in loign api  ${data.data!
-                  .studentName} ");
-        }
-        ShortMessage.toast(
-          title: data.message.toString(),
-        );
-        ///
-        /*
-        PrefManager().writeValue(
-            key: PrefConst.profile_photo,
-            value:
-            "${controller.baseUrl.value}${AppUrl.profile_image_baseurl}${data
-                .data!.uploadLogo1!}");
-        */
-        if (data.data == null) {
-          ShortMessage.toast(
-            title: data.message.toString(),
-          );
-          controller.isLoading.value = false;
-        } else if (data.data != null) {
-          ShortMessage.toast(
-            title: data.message.toString(),
-          );
-
-          debugPrint("please proceed ! path is clear");
-          PrefManager().writeValue(key: PrefConst.Session, value: data.data!.session.toString());
-                    PrefManager().writeValue(key: PrefConst.fatherName, value: data.data!.fatherName.toString());
-                    PrefManager().writeValue(key: PrefConst.fathenumber, value: data.data!.fMobileno.toString());
-
-           PrefManager().writeValue(key: PrefConst.classid, value: data.data!.classId.toString());
-            PrefManager().writeValue(key: PrefConst.sectionid, value: data.data!.sectionId.toString());
-
-          await fetchStudentData();
-          // Get.offAllNamed(RouteName.dashboard_screen);
-          // Get.offAllNamed(RouteName.selectStudent_screen);
-          controller.isLoading.value = false;
-
-          if (kDebugMode) {
-            print(" no error this side");
-          }
-          controller.isLoading.value = false;
-        } else if (data.statuscode == 400) {
-          debugPrint("chakkar hai yahi pr re ");
-          ShortMessage.toast(
-            title: data.message.toString(),
-          );
-        }
-
-        if (kDebugMode) {
-          print(" value in post method    ${value.toString()}");
-        }
-      }
-    }).onError((error, stackTrace) {
-      ShortMessage.toast(title: "Something went wrong!\n Please Try again ");
-      controller.isLoading.value = false;
-      if (kDebugMode) {
-        print(error.toString());
-      }
-    });
-  }
   var students = <Student>[].obs;
 
+  Future<void> loginApi(dynamic data, String url) async {
+    controller.isLoading.value = true;
 
+    try {
+      final value = await myRepo.loginApi(data: data, baseUrl: url);
+      final loginResponse = Login_Model.fromJson(value);
+
+      if (loginResponse.data == null) {
+        ShortMessage.toast(
+          title: loginResponse.message?.toString() ?? "Login failed",
+        );
+        controller.isLoading.value = false;
+        return;
+      }
+
+      if (loginResponse.data!.action.toString() == "0") {
+        await PrefManager().clearPref();
+        ShortMessage.toast(title: "Cannot login. User is inactive");
+        controller.isLoading.value = false;
+        Get.offAllNamed(RouteName.login_screen);
+        return;
+      }
+
+      final username = controller.userNamecontroller.text.trim();
+      final password = controller.userPasswordcontroller.text.trim();
+      final schoolId = controller.schoolIdController.text.trim();
+
+      await PrefManager().writeValue(
+        key: PrefConst.UserName,
+        value: username,
+      );
+
+      await PrefManager().writeValue(
+        key: PrefConst.UserPass,
+        value: password,
+      );
+
+      await PrefManager().writeValue(
+        key: PrefConst.SchoolId,
+        value: schoolId,
+      );
+
+      await PrefManager().writeValue(
+        key: PrefConst.Session,
+        value: loginResponse.data!.session?.toString() ?? "",
+      );
+
+      await PrefManager().writeValue(
+        key: PrefConst.fatherName,
+        value: loginResponse.data!.fatherName?.toString() ?? "",
+      );
+
+      await PrefManager().writeValue(
+        key: PrefConst.fathenumber,
+        value: loginResponse.data!.fMobileno?.toString() ?? "",
+      );
+
+      await PrefManager().writeValue(
+        key: PrefConst.classid,
+        value: loginResponse.data!.classId?.toString() ?? "",
+      );
+
+      await PrefManager().writeValue(
+        key: PrefConst.sectionid,
+        value: loginResponse.data!.sectionId?.toString() ?? "",
+      );
+
+      await PrefManager().writeValue(
+        key: PrefConst.loginValue,
+        value: "yes",
+      );
+
+      ShortMessage.toast(
+        title: loginResponse.message?.toString() ?? "Login successful",
+      );
+
+      if (kDebugMode) {
+        print("Login Success");
+        print("Session => ${loginResponse.data!.session}");
+        print("SchoolId => $schoolId");
+        print("ClassId => ${loginResponse.data!.classId}");
+        print("SectionId => ${loginResponse.data!.sectionId}");
+        print("BaseUrl => ${controller.baseUrl.value}");
+      }
+
+      await fetchStudentData();
+
+      controller.isLoading.value = false;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      controller.isLoading.value = false;
+
+      ShortMessage.toast(
+        title: "Something went wrong! Please try again.",
+      );
+
+      if (kDebugMode) {
+        print("loginApi error => $error");
+        print("stackTrace => $stackTrace");
+      }
+    }
+  }
 
   Future<void> fetchStudentData() async {
     try {
-      // Retrieve stored values from PrefManager
-      final parentID = await PrefManager().readValue(key: PrefConst.UserName);
-      final pass = await PrefManager().readValue(key: PrefConst.UserPass);
-      final session = await PrefManager().readValue(key: PrefConst.Session);
-     final baseUrl =
-      await PrefManager().readValue(key: PrefConst.baseUrlLocalSaved);
+      final parentID =
+          await PrefManager().readValue(key: PrefConst.UserName) ?? "";
+      final pass =
+          await PrefManager().readValue(key: PrefConst.UserPass) ?? "";
+      final session =
+          await PrefManager().readValue(key: PrefConst.Session) ?? "";
+      final baseUrl =
+          await PrefManager().readValue(key: PrefConst.baseUrlLocalSaved) ?? "";
 
-      // Construct the API URL
+      if (parentID.isEmpty ||
+          pass.isEmpty ||
+          session.isEmpty ||
+          baseUrl.isEmpty) {
+        ShortMessage.toast(title: "Login data missing");
+        return;
+      }
+
       final url =
           "${baseUrl}api/ParentApp/ViewStudentDetails/$parentID/$pass/$session";
-      print("sibling url :${url}");
-      // Make the API request
+
+      if (kDebugMode) {
+        print("Student details URL => $url");
+      }
+
       final response = await http.get(Uri.parse(url));
 
-      // Check if the response is successful
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
         final apiResponse = ApiResponse.fromJson(jsonResponse);
 
-        // Ensure `data` is not null and update students list
-        students.assignAll((apiResponse.data ?? []) as Iterable<Student>);
-        PrefManager().writeValue(key: PrefConst.loginValue, value: "yes");
-        // Handle single student scenario
+        students.assignAll(apiResponse.data ?? []);
+
+        await PrefManager().writeValue(
+          key: PrefConst.siblingCount,
+          value: students.length.toString(),
+        );
+
         if (students.isNotEmpty && students.length == 1) {
-          // Save student data and navigate to the dashboard
           await PrefManager().setUserData(userData: students.first);
-          Get.offAllNamed(RouteName.dashboard_screen);
-          PrefManager().writeValue(key: PrefConst.siblingCount, value:students.length.toString());
-        }
-        else{
-          Get.offAllNamed(RouteName.dashboard_screen);
         }
 
-        // Return the count of students as a string
+        Get.offAllNamed(RouteName.dashboard_screen);
       } else {
-        // Handle non-200 status codes gracefully
-        throw Exception('Failed to fetch student data: ${response.statusCode}');
+        throw Exception(
+          'Failed to fetch student data: ${response.statusCode}',
+        );
       }
     } catch (e, stackTrace) {
-      // Log the error and stack trace for debugging
       if (kDebugMode) {
-        print("Error fetching student data: $e");
-        print("Stack trace: $stackTrace");
+        print("fetchStudentData error => $e");
+        print("stackTrace => $stackTrace");
       }
-    } finally {
-      // Ensure loading status is updated to complete
-
+      ShortMessage.toast(title: "Unable to load student data");
     }
   }
-
 }
 
 class EnquiryViewModel with ChangeNotifier {
-  final enquiryRepo = EnquiryRepository();
+  final EnquiryRepository enquiryRepo = EnquiryRepository();
+  final EnquiryPageController controller = Get.find<EnquiryPageController>();
 
-  final controller = Get.find<EnquiryPageController>();
-  Future<void> enquiryApi(dynamic data, BuildContext context, url) async {
+  Future<void> enquiryApi(dynamic data, BuildContext context, String url) async {
     controller.isLoading.value = true;
-    enquiryRepo.enquiryApi(data: data, baseUrl: url).then((value) async {
-      var data = EnquiryPostModelClass.fromJson(value);
 
-      if (kDebugMode) {
-        print(
-            "data is in post method and in enquiry api  ${data.data!.studentName} ");
-      }
-      ShortMessage.toast(
-        title: "Enquiry Submitted Succesfully",
-      );
-      if (data.data == null) {
-        ShortMessage.toast(
-          title: "Enquiry Submitted Succesfully",
-        );
-        controller.isLoading.value = false;
-      } else if (data.data != null) {
-        ShortMessage.toast(
-          title: "Enquiry Submitted Succesfully",
-        );
+    try {
+      final value = await enquiryRepo.enquiryApi(data: data, baseUrl: url);
+      final response = EnquiryPostModelClass.fromJson(value);
+
+      ShortMessage.toast(title: "Enquiry Submitted Successfully");
+
+      if (response.data != null) {
         Get.back();
-        controller.isLoading.value = false;
-
-        debugPrint("everything is fine here ");
-        if (kDebugMode) {
-          print(" no error this side");
-        }
-        controller.isLoading.value = false;
-      } else if (data.statuscode == 400) {
-        debugPrint("chakkar hai yahi pr re ");
-        ShortMessage.toast(
-          title: data.message.toString(),
-        );
       }
 
-      if (kDebugMode) {
-        print(" value in post method    ${value.toString()}");
-      }
-    }).onError((error, stackTrace) {
+      controller.isLoading.value = false;
+      notifyListeners();
+    } catch (error) {
+      controller.isLoading.value = false;
       ShortMessage.toast(title: error.toString());
+
       if (kDebugMode) {
         print(error.toString());
       }
-    });
+    }
   }
 }

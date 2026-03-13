@@ -1,13 +1,7 @@
-import 'dart:ffi';
-
 import 'package:cached_network_image/cached_network_image.dart';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../controller/login_page_controller.dart';
 import '../infrastructures/constant/image_constant.dart';
@@ -19,12 +13,9 @@ import '../utils/constans.dart';
 import '../utils/custom_text.dart';
 import '../utils/utils.dart';
 
-
-/// Reusable input decoration for a consistent look.
 InputDecoration buildInputDecoration({
   required String hint,
   IconData? prefixIcon,
-  bool isPassword = false,
   IconButton? suffixIconButton,
 }) {
   return InputDecoration(
@@ -33,22 +24,24 @@ InputDecoration buildInputDecoration({
     hintText: hint,
     hintStyle: TextStyle(
       color: Colors.grey,
-      fontSize: 12.0.sp,
+      fontSize: 12.sp,
     ),
-
     prefixIcon: prefixIcon == null
-        ? null 
-        : Icon(prefixIcon, color: Colors.grey, size: 20.r),
-    suffixIcon: suffixIconButton, // e.g., for password visibility
+        ? null
+        : Icon(
+      prefixIcon,
+      color: Colors.grey,
+      size: 20.r,
+    ),
+    suffixIcon: suffixIconButton,
     contentPadding: EdgeInsets.symmetric(
       vertical: 14.h,
       horizontal: 14.w,
     ),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(20.r),
-      borderSide: BorderSide.none, // Remove default border
+      borderSide: BorderSide.none,
     ),
-    //dash
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(20.r),
       borderSide: const BorderSide(
@@ -67,265 +60,341 @@ InputDecoration buildInputDecoration({
 }
 
 class LoginScreen extends GetView<LogInPageController> {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final loginViewModel = Get.find<LoginViewModel>();
+    final LoginViewModel loginViewModel = Get.find<LoginViewModel>();
 
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
           height: Get.height,
+          width: Get.width,
           decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage(ImageConstants.background1),
               fit: BoxFit.fill,
             ),
           ),
-          child: Column(
-            children: [
-              SizedBox(height: 30.h),
+          child: SafeArea(
+            child: Column(
+              children: [
+                SizedBox(height: 20.h),
 
-              /// --- School Logo or Fallback ---
-              Obx(() {
-                if (controller.schoolImage.value.isEmpty) {
-                  return Image.asset(
-                    "assets/image/eduagent_logo.png",
-                    height: 280.h,
-                    width: 280.w,
-                  );
-                } else {
-                  return Container(
-                    height: 100.h,
+                /// LOGO
+                Obx(() {
+                  if (controller.schoolImage.value.isEmpty) {
+                    return Image.asset(
+                      "assets/image/eduagent_logo.png",
+                      height: 220.h,
+                      width: 220.w,
+                      fit: BoxFit.contain,
+                    );
+                  }
+
+                  return SizedBox(
+                    height: 120.h,
                     child: CachedNetworkImage(
-                      //fit: BoxFit.contain,
                       imageUrl:
-                          "${controller.secUrl.value}${AppUrl.imageSecUrl}${controller.schoolImage.value}",
-                      placeholder: (context, url) =>
-                          const CircularProgressIndicator(),
+                      "${controller.secUrl.value}${AppUrl.imageSecUrl}${controller.schoolImage.value}",
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
                       errorWidget: (context, url, error) => Image.asset(
                         "assets/image/eduagent_logo.png",
-                      
+                        fit: BoxFit.contain,
                       ),
-                    ));}
-              }),
+                    ),
+                  );
+                }),
 
-              SizedBox(height: 30.h),
+                SizedBox(height: 25.h),
 
-              /// --- Form Container ---
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 15.w),
-                child: Container(
-                  width: Get.width,
-                  padding: EdgeInsets.only(bottom: 10.h),
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: 16.0.w,
-                      right: 36.0.w,
-                      top: 20.0.h,
+                /// FORM BOX
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 20.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(18.r),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        /// --- SCHOOL ID FIELD ---
                         CustomText(
                           data: "School Id",
-                          fontWeight: FontWeight.w500,
-                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18.sp,
                         ),
+                        SizedBox(height: 8.h),
+
                         TextFormField(
                           controller: controller.schoolIdController,
                           keyboardType: TextInputType.text,
+                          textCapitalization: TextCapitalization.characters,
                           decoration: buildInputDecoration(
                             hint: "Enter School Id",
                             prefixIcon: Icons.school,
                           ),
-                          onChanged: (value) {
-                            // Save typed School ID to local pref.
-                            PrefManager().writeValue(
+                          onChanged: (value) async {
+                            final String cleanValue =
+                            value.trim().replaceAll(" ", "");
+
+                            await PrefManager().writeValue(
                               key: PrefConst.SchoolId,
-                              value: value.removeAllWhitespace,
+                              value: cleanValue,
                             );
-                            // Fetch base URL for the typed school ID
-                            controller.getBaseUrl(
-                              schoolId: value.removeAllWhitespace,
-                            );
+
+                            if (cleanValue.length == 8) {
+                              await controller.getBaseUrl(
+                                schoolId: cleanValue,
+                              );
+                            } else {
+                              controller.isGetBaseUrl.value = false;
+                              controller.baseUrl.value = "";
+                              controller.secUrl.value = "";
+                              controller.schoolImage.value = "";
+                              controller.schoolname.value = "";
+                              controller.schoolphone.value = "";
+                              controller.schoolemail.value = "";
+                            }
                           },
                         ),
-                        SizedBox(height: 10.h),
 
-                        /// Decide if the rest of the fields are visible
+                        SizedBox(height: 16.h),
+
+                        /// SCHOOL NAME SHOW
                         Obx(() {
-                          final isSchoolIdRecognized =
-                              (controller.schoolDetail.value.applicationURL !=
-                                  null);
+                          if (controller.schoolname.value.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
 
-                          // If not recognized, show a placeholder.
-                          if (!isSchoolIdRecognized) {
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 14.h),
+                            child: Text(
+                              controller.schoolname.value,
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                          );
+                        }),
+
+                        /// USERNAME + PASSWORD ONLY AFTER VALID SCHOOL ID
+                        Obx(() {
+                          final bool isSchoolValid =
+                              controller.isGetBaseUrl.value &&
+                                  controller.baseUrl.value.isNotEmpty;
+
+                          if (!isSchoolValid) {
                             return Container(
-                              padding: EdgeInsets.symmetric(vertical: 40.h),
+                              width: double.infinity,
+                              padding: EdgeInsets.symmetric(vertical: 28.h),
                               alignment: Alignment.center,
-                              child: const Text(
+                              child: Text(
                                 "Please enter a valid School ID to proceed.",
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontSize: 14.sp,
+                                ),
                               ),
                             );
                           }
-                          // If recognized, show parent ID + password + sign in button
-                          else {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                /// --- PARENT ID FIELD ---
-                                CustomText(
-                                  data: "Parent Id",
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                TextField(
-                                  controller: controller.userNamecontroller,
-                                  keyboardType: TextInputType.text,
-                                  textCapitalization: TextCapitalization.words,
-                                  decoration: buildInputDecoration(
-                                    hint: "Parent Id",
-                                    prefixIcon: Icons.person,
-                                  ),
-                                  onChanged: (value) {
-                                    controller.login.value = value;
-                                  },
-                                ),
-                                SizedBox(height: 10.h),
 
-                                /// --- PASSWORD FIELD ---
-                                CustomText(
-                                  data: "Password",
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 20.sp,
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CustomText(
+                                data: "Username",
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18.sp,
+                              ),
+                              SizedBox(height: 8.h),
+                              TextFormField(
+                                controller: controller.userNamecontroller,
+                                keyboardType: TextInputType.text,
+                                decoration: buildInputDecoration(
+                                  hint: "Enter Username",
+                                  prefixIcon: Icons.person,
                                 ),
-                                Obx(() {
-                                  return TextFormField(
-                                    controller:
-                                        controller.userPasswordcontroller,
-                                    keyboardType:
-                                        TextInputType.visiblePassword,
-                                    obscureText: controller.isObscure.value,
-                                    decoration: buildInputDecoration(
-                                      hint: "**********",
-                                      prefixIcon: Icons.lock,
-                                      suffixIconButton: IconButton(
-                                        icon: Icon(
-                                          controller.isObscure.value
-                                              ? Icons.visibility
-                                              : Icons.visibility_off,
-                                        ),
-                                        onPressed:
-                                            controller.togglePasswordVisibility,
+                              ),
+
+                              SizedBox(height: 14.h),
+
+                              CustomText(
+                                data: "Password",
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18.sp,
+                              ),
+                              SizedBox(height: 8.h),
+
+                              Obx(() {
+                                return TextFormField(
+                                  controller:
+                                  controller.userPasswordcontroller,
+                                  keyboardType:
+                                  TextInputType.visiblePassword,
+                                  obscureText: controller.isObscure.value,
+                                  decoration: buildInputDecoration(
+                                    hint: "Enter Password",
+                                    prefixIcon: Icons.lock,
+                                    suffixIconButton: IconButton(
+                                      onPressed: controller
+                                          .togglePasswordVisibility,
+                                      icon: Icon(
+                                        controller.isObscure.value
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
                                       ),
                                     ),
-                                    onChanged: (value) {
-                                      controller.login.value = value;
+                                  ),
+                                );
+                              }),
+
+                              SizedBox(height: 24.h),
+
+                              /// LOGIN BUTTON
+                              Obx(() {
+                                return Center(
+                                  child: InkWell(
+                                    onTap: controller.isLoading.value
+                                        ? null
+                                        : () async {
+                                      final String schoolId = controller
+                                          .schoolIdController.text
+                                          .trim()
+                                          .replaceAll(" ", "");
+                                      final String username = controller
+                                          .userNamecontroller.text
+                                          .trim();
+                                      final String password = controller
+                                          .userPasswordcontroller.text
+                                          .trim();
+
+                                      if (schoolId.isEmpty) {
+                                        ShortMessage.toast(
+                                          title: "Enter School ID",
+                                        );
+                                        return;
+                                      }
+
+                                      if (schoolId.length != 8) {
+                                        ShortMessage.toast(
+                                          title: "Enter valid School ID",
+                                        );
+                                        return;
+                                      }
+
+                                      if (controller.baseUrl.value.isEmpty) {
+                                        ShortMessage.toast(
+                                          title: "School ID not matched",
+                                        );
+                                        return;
+                                      }
+
+                                      if (username.isEmpty) {
+                                        ShortMessage.toast(
+                                          title: "Enter Username",
+                                        );
+                                        return;
+                                      }
+
+                                      if (password.isEmpty) {
+                                        ShortMessage.toast(
+                                          title: "Enter Password",
+                                        );
+                                        return;
+                                      }
+
+                                      await PrefManager().writeValue(
+                                        key: PrefConst.UserName,
+                                        value: username,
+                                      );
+
+                                      await PrefManager().writeValue(
+                                        key: PrefConst.UserPass,
+                                        value: password,
+                                      );
+
+                                      await PrefManager().writeValue(
+                                        key: PrefConst.SchoolId,
+                                        value: schoolId,
+                                      );
+
+                                      final Map<String, dynamic> requestData = {
+                                        "UserName": username,
+                                        "Password": password,
+                                      };
+
+                                      await loginViewModel.loginApi(
+                                        requestData,
+                                        controller.baseUrl.value,
+                                      );
                                     },
-                                  );
-                                }),
-                                SizedBox(height: 25.h),
-
-                                /// --- SIGN IN BUTTON ---
-                                Center(
-                                  child: Container(
-                                    width: 230.w,
-                                    height: 40.h,
-                                    decoration:BoxDecoration(
-  /// Remove the `color` property if you’re using a gradient
-  gradient: LinearGradient(
-    colors: [
-      kPrimaryColor,      // Start color
-      Colors.purple,      // End color (replace with any color you like)
-    ],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  ),
-  borderRadius: BorderRadius.circular(6.0.r),
-  boxShadow: [
-    BoxShadow(
-      color: ActiveShadowColor,
-      offset: const Offset(0.0, 8.0),
-      blurRadius: 8.0.r,
-    ),
-  ],
-)
-,
-                                    child: InkWell(
-                                      onTap: () async {
-                                        final parentId = controller
-                                            .userNamecontroller
-                                            .value
-                                            .text
-                                            .removeAllWhitespace;
-                                        final password = controller
-                                            .userPasswordcontroller
-                                            .value
-                                            .text
-                                            .removeAllWhitespace;
-
-                                        if (parentId.isEmpty &&
-                                            password.isEmpty) {
-                                          ShortMessage.toast(
-                                              title: "Empty field");
-                                        } else {
-                                          final data = {
-                                            "UserName": parentId,
-                                            "Password": password,
-                                          };
-
-                                          // Save credentials to local storage, if needed
-                                          await PrefManager().writeValue(
-                                            key: PrefConst.UserName,
-                                            value: parentId,
-                                          );
-                                          await PrefManager().writeValue(
-                                            key: PrefConst.UserPass,
-                                            value: password,
-                                          );
-
-                                          // Make the login API call
-                                          loginViewModel.loginApi(
-                                            data,
-                                            controller.baseUrl.value,
-                                          );
-
-                                          if (kDebugMode) {
-                                            print(
-                                                "base url: ${controller.baseUrl.value}");
-                                            print("data: $data");
-                                            print("API call triggered");
-                                          }
-                                        }
-                                      },
+                                    child: Container(
+                                      width: 230.w,
+                                      height: 45.h,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            kPrimaryColor,
+                                            Colors.purple,
+                                          ],
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                        ),
+                                        borderRadius:
+                                        BorderRadius.circular(8.r),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: ActiveShadowColor,
+                                            offset: const Offset(0, 8),
+                                            blurRadius: 8.r,
+                                          ),
+                                        ],
+                                      ),
                                       child: Center(
-                                        child: Text(
+                                        child: controller.isLoading.value
+                                            ? SizedBox(
+                                          height: 20.h,
+                                          width: 20.w,
+                                          child:
+                                          const CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                            : Text(
                                           "SIGN IN",
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontFamily: "Poppins-Bold",
                                             fontSize: 16.sp,
-                                            letterSpacing: 1.0.w,
+                                            letterSpacing: 1.w,
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            );
-                          }
+                                );
+                              }),
+                            ],
+                          );
                         }),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
