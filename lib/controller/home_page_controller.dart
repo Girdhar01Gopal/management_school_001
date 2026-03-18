@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../infrastructures/routes/page_constants.dart';
+import '../local_storage/local_storage.dart';
+import '../local_storage/pref_const.dart';
+import '../repo/app_url.dart';
+
 class DashboardItemModel {
   final String name;
   final IconData image;
@@ -21,14 +26,15 @@ class DashboardScreenController extends GetxController {
   RxBool isLoading = false.obs;
   RxString errorMessage = ''.obs;
 
-  /// Top info
-  RxString schoolName = "Edubloom Public School".obs;
+  RxString schoolName = "".obs;
   RxString session = "2025-26".obs;
-  RxString schoolId = "SCH-1025".obs;
-  RxString userName = "Admin User".obs;
-  RxString siblingCount = "2".obs;
+  RxString schoolId = "".obs;
+  RxString userName = "".obs;
+  RxString siblingCount = "".obs;
 
-  /// Dashboard grid items
+  RxString schoolLogo = "".obs;
+  RxString secUrl = "".obs;
+
   RxList<DashboardItemModel> filteredList = <DashboardItemModel>[].obs;
 
   @override
@@ -42,13 +48,72 @@ class DashboardScreenController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      await Future.delayed(const Duration(milliseconds: 500));
+      await loadSchoolHeaderData();
+      await Future.delayed(const Duration(milliseconds: 300));
 
       loadStaticDashboardData();
     } catch (e) {
       errorMessage.value = "Unable to load dashboard data";
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> loadSchoolHeaderData() async {
+    schoolName.value =
+        await PrefManager().readValue(key: PrefConst.schoolname) ?? "";
+
+    schoolId.value =
+        await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
+
+    userName.value =
+        await PrefManager().readValue(key: PrefConst.UserName) ?? "";
+
+    schoolLogo.value =
+        await PrefManager().readValue(key: PrefConst.schoolImage) ?? "";
+
+    secUrl.value =
+        await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
+
+    debugPrint("schoolName => ${schoolName.value}");
+    debugPrint("schoolId => ${schoolId.value}");
+    debugPrint("schoolLogo => ${schoolLogo.value}");
+    debugPrint("secUrl => ${secUrl.value}");
+    debugPrint("finalLogoUrl => $schoolLogoUrl");
+  }
+
+  String get schoolLogoUrl {
+    if (secUrl.value.isEmpty || schoolLogo.value.isEmpty) return "";
+    return "${secUrl.value}${AppUrl.imageSecUrl}${schoolLogo.value}";
+  }
+
+  Future<void> logoutUser() async {
+    try {
+      await PrefManager().writeValue(key: PrefConst.UserName, value: "");
+      await PrefManager().writeValue(key: PrefConst.UserPass, value: "");
+      await PrefManager().writeValue(key: PrefConst.SchoolId, value: "");
+      await PrefManager().writeValue(key: PrefConst.baseUrlLocalSaved, value: "");
+      await PrefManager().writeValue(key: PrefConst.secUrlLocalSaved, value: "");
+      await PrefManager().writeValue(key: PrefConst.schoolImage, value: "");
+      await PrefManager().writeValue(key: PrefConst.schoolname, value: "");
+      await PrefManager().writeValue(key: PrefConst.schoolphone, value: "");
+      await PrefManager().writeValue(key: PrefConst.schoolemail, value: "");
+      await PrefManager().writeValue(key: PrefConst.getBaseUrl, value: "");
+
+      schoolName.value = "";
+      schoolId.value = "";
+      userName.value = "";
+      schoolLogo.value = "";
+      secUrl.value = "";
+
+      Get.offAllNamed(RouteName.login_screen);
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Logout failed",
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+      );
     }
   }
 
@@ -105,7 +170,7 @@ class DashboardScreenController extends GetxController {
         ],
       ),
       DashboardItemModel(
-        name: "Fees Staff",
+        name: "Total Staff",
         image: Icons.people_alt_rounded,
         color: const Color(0xFFE53935),
         count: "42",

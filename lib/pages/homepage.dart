@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -16,25 +17,103 @@ class Dhashoard extends GetView<DashboardScreenController> {
         elevation: 0,
         toolbarHeight: 75.h,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Obx(
-              () => Text(
-            controller.schoolName.value.isEmpty
-                ? "School Management"
-                : controller.schoolName.value,
-            style: TextStyle(
-              fontSize: 20.sp,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+        automaticallyImplyLeading: false,
+
+        /// LEFT SIDE 3 DOT MENU
+        leading: PopupMenuButton<String>(
+          icon: const Icon(
+            Icons.more_horiz,
+            color: Colors.white,
           ),
+          onSelected: (value) async {
+            if (value == "logout") {
+              final shouldLogout = await _showLogoutDialog(context);
+              if (shouldLogout == true) {
+                controller.logoutUser();
+              }
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem<String>(
+              value: "logout",
+              child: Row(
+                children: [
+                  Icon(Icons.logout, color: Colors.red),
+                  SizedBox(width: 10),
+                  Text("Logout"),
+                ],
+              ),
+            ),
+          ],
         ),
+
+        title: Obx(() {
+          final logoUrl = controller.schoolLogoUrl;
+
+          if (logoUrl.isNotEmpty) {
+            return SizedBox(
+              height: 50.h,
+              width: 150.w,
+              child: CachedNetworkImage(
+                imageUrl: logoUrl,
+                fit: BoxFit.contain,
+                placeholder: (context, url) => Center(
+                  child: SizedBox(
+                    height: 20.h,
+                    width: 20.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) =>
+                controller.schoolName.value.isNotEmpty
+                    ? Text(
+                  controller.schoolName.value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+                    : const SizedBox.shrink(),
+              ),
+            );
+          }
+
+          return controller.schoolName.value.isNotEmpty
+              ? Text(
+            controller.schoolName.value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          )
+              : const SizedBox.shrink();
+        }),
+
+        /// RIGHT SIDE NOTIFICATION ICON
         actions: [
           IconButton(
-            tooltip: "Refresh",
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () async {
-              await controller.fetchDashboardData();
+            tooltip: "Notifications",
+            icon: const Icon(
+              Icons.notifications_active,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Get.snackbar(
+                "Notification",
+                "No new notifications",
+                snackPosition: SnackPosition.BOTTOM,
+                margin: const EdgeInsets.all(12),
+                duration: const Duration(seconds: 2),
+              );
             },
           ),
         ],
@@ -73,17 +152,44 @@ class Dhashoard extends GetView<DashboardScreenController> {
               children: [
                 _buildTopInfoCard(),
                 SizedBox(height: 20.h),
-
                 _buildSectionTitle("Quick Access"),
                 SizedBox(height: 12.h),
                 _buildDashboardGrid(),
-
                 SizedBox(height: 20.h),
               ],
             ),
           ),
         );
       }),
+    );
+  }
+
+  Future<bool?> _showLogoutDialog(BuildContext context) {
+    return Get.dialog<bool>(
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Get.back(result: true),
+            child: const Text(
+              "Logout",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      barrierDismissible: true,
     );
   }
 
