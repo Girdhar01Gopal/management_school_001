@@ -7,7 +7,7 @@ class AppUrl {
   // static var schoolLogo = "http://school.eduagentapp.com/upload/Schoollogo/";
   // static var imageBaseUrl = "http://school.eduagentapp.com/";
   static var imageSecUrl = "/upload/Schoollogo/";
-  static var loginUrl = "api/ParentApp/Login";
+  static var loginUrl = "api/FMSCoreApi/ManagmanetLogin";
   static var homeworkUrl = "api/ParentApp/ViewHomeworkTop3/";
   static var homeworksearchUrl = "api/ParentApp/SearchDateHomeWork/";
   static var homeworkDownloadUrl = "upload/HomeworkFile/";

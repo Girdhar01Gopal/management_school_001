@@ -86,32 +86,18 @@ class SplashScreenController extends GetxController {
 //    );
 
 // }
-  nextPage() {
-    Future.delayed(Duration(seconds: waitingTime), () async {
-      var isLogged =
-          await PrefManager().readValue(key: PrefConst.loginValue) ?? "";
-      var isFirst =
-          await PrefManager().readValue(key: PrefConst.isIntroFirst) ?? "";
-      if (isLogged == "yes") {
-       await fetchStudentData();
-       if(isSingle.value == "Yes"){
-         await PrefManager().setUserData(userData: students.first);
-         PrefManager().writeValue(key: PrefConst.siblingCount, value:students.length.toString());
-         Get.offAndToNamed(
-           RouteName.dashboard_screen,
-         );
-       }else{
-         Get.offAndToNamed(
-           RouteName.dashboard_screen,
-         );
-       }
-      } else {
-        Get.offAndToNamed(
-          RouteName.login_screen,
-        );
-      }
-    });
+Future<void> nextPage() async {
+  await Future.delayed(Duration(seconds: waitingTime));
+
+  final isLogged =
+      await PrefManager().readValue(key: PrefConst.islogin) ?? "";
+
+  if (isLogged.toString() == "true") {
+    Get.offAllNamed(RouteName.dashboard_screen);
+  } else {
+    Get.offAllNamed(RouteName.login_screen);
   }
+}
 
   // getting notification token to send push notification
   Future<void> getDeviceTokenToSendNotification() async {

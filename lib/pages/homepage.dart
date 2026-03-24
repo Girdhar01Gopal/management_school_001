@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -11,113 +10,7 @@ class Dhashoard extends GetView<DashboardScreenController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF5F6368),
-        elevation: 0,
-        toolbarHeight: 75.h,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-
-        /// LEFT SIDE 3 DOT MENU
-        leading: PopupMenuButton<String>(
-          icon: const Icon(
-            Icons.more_horiz,
-            color: Colors.white,
-          ),
-          onSelected: (value) async {
-            if (value == "logout") {
-              final shouldLogout = await _showLogoutDialog(context);
-              if (shouldLogout == true) {
-                controller.logoutUser();
-              }
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem<String>(
-              value: "logout",
-              child: Row(
-                children: [
-                  Icon(Icons.logout, color: Colors.red),
-                  SizedBox(width: 10),
-                  Text("Logout"),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        title: Obx(() {
-          final logoUrl = controller.schoolLogoUrl;
-
-          if (logoUrl.isNotEmpty) {
-            return SizedBox(
-              height: 50.h,
-              width: 150.w,
-              child: CachedNetworkImage(
-                imageUrl: logoUrl,
-                fit: BoxFit.contain,
-                placeholder: (context, url) => Center(
-                  child: SizedBox(
-                    height: 20.h,
-                    width: 20.w,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) =>
-                controller.schoolName.value.isNotEmpty
-                    ? Text(
-                  controller.schoolName.value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                )
-                    : const SizedBox.shrink(),
-              ),
-            );
-          }
-
-          return controller.schoolName.value.isNotEmpty
-              ? Text(
-            controller.schoolName.value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          )
-              : const SizedBox.shrink();
-        }),
-
-        /// RIGHT SIDE NOTIFICATION ICON
-        actions: [
-          IconButton(
-            tooltip: "Notifications",
-            icon: const Icon(
-              Icons.notifications_active,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Get.snackbar(
-                "Notification",
-                "No new notifications",
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(12),
-                duration: const Duration(seconds: 2),
-              );
-            },
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF2F5FA),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(
@@ -144,23 +37,116 @@ class Dhashoard extends GetView<DashboardScreenController> {
 
         return RefreshIndicator(
           onRefresh: controller.fetchDashboardData,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTopInfoCard(),
-                SizedBox(height: 20.h),
-                _buildSectionTitle("Quick Access"),
-                SizedBox(height: 12.h),
-                _buildDashboardGrid(),
-                SizedBox(height: 20.h),
-              ],
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFE8EEF8),
+                  Color(0xFFF7F9FD),
+                ],
+              ),
+            ),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              child: SafeArea(
+                bottom: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildActionRow(context),
+                    SizedBox(height: 16.h),
+                    _buildKpiStrip(),
+                    SizedBox(height: 18.h),
+                    _buildSectionTitle("Dashboard Overview"),
+                    SizedBox(height: 12.h),
+                    _buildDashboardGrid(),
+                    SizedBox(height: 20.h),
+                  ],
+                ),
+              ),
             ),
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildActionRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                controller.schoolName.value.isEmpty
+                    ? "School Dashboard"
+                    : controller.schoolName.value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF152238),
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                "Session ${controller.session.value}",
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF5B6475),
+                ),
+              ),
+            ],
+          ),
+        ),
+   
+        SizedBox(width: 10.w),
+        Container(
+          height: 44.h,
+          width: 60.w,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 7),
+              ),
+            ],
+          ),
+          child: PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            color: Colors.white,
+            onSelected: (value) async {
+              if (value == "logout") {
+                final shouldLogout = await _showLogoutDialog(context);
+                if (shouldLogout == true) {
+                  controller.logoutUser();
+                }
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem<String>(
+                value: "logout",
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.red),
+                    SizedBox(width: 10),
+                    Text("Logout"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -199,135 +185,78 @@ class Dhashoard extends GetView<DashboardScreenController> {
       style: TextStyle(
         fontSize: 18.sp,
         fontWeight: FontWeight.w700,
-        color: Colors.black87,
+        color: const Color(0xFF1F2937),
       ),
     );
   }
 
-  Widget _buildTopInfoCard() {
-    return Obx(
-          () => Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18.r),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF5F6368),
-              Color(0xFF7A7F85),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.10),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              controller.schoolName.value.isEmpty
-                  ? "School Management"
-                  : controller.schoolName.value,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
+  Widget _buildKpiStrip() {
+    return Obx(() {
+      final previewItems = controller.filteredList.take(4).toList();
+      if (previewItems.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      return SizedBox(
+        height: 96.h,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: previewItems.length,
+          separatorBuilder: (_, __) => SizedBox(width: 10.w),
+          itemBuilder: (context, index) {
+            final item = previewItems[index];
+            return Container(
+              width: 150.w,
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16.r),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: item.gradientColors ??
+                      [
+                        item.color.withOpacity(0.9),
+                        item.color,
+                      ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: item.color.withOpacity(0.25),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _infoTile(
-                    label: "Session",
-                    value: controller.session.value.isEmpty
-                        ? "-"
-                        : controller.session.value,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(item.image, color: Colors.white, size: 20.sp),
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: Colors.white.withOpacity(0.90),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: _infoTile(
-                    label: "School ID",
-                    value: controller.schoolId.value.isEmpty
-                        ? "-"
-                        : controller.schoolId.value,
+                  Text(
+                    _formatCount(item.count),
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: 10.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _infoTile(
-                    label: "Username",
-                    value: controller.userName.value.isEmpty
-                        ? "-"
-                        : controller.userName.value,
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: _infoTile(
-                    label: "Sibling Count",
-                    value: controller.siblingCount.value.isEmpty
-                        ? "0"
-                        : controller.siblingCount.value,
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            );
+          },
         ),
-      ),
-    );
-  }
-
-  Widget _infoTile({
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.10),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5.sp,
-              color: Colors.white70,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildDashboardGrid() {
@@ -354,47 +283,48 @@ class Dhashoard extends GetView<DashboardScreenController> {
         itemCount: controller.filteredList.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 1.8,
-          crossAxisSpacing: 14.w,
-          mainAxisSpacing: 14.h,
+          childAspectRatio: 1.1,
+          crossAxisSpacing: 12.w,
+          mainAxisSpacing: 12.h,
         ),
         itemBuilder: (context, index) {
           final item = controller.filteredList[index];
 
           return InkWell(
             onTap: () => controller.onSelectedBottom(index),
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(18.r),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 18.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(18.r),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    item.color.withOpacity(0.16),
+                    item.color.withOpacity(0.13),
                     Colors.white,
                   ],
                 ),
                 border: Border.all(
-                  color: item.color.withOpacity(0.12),
+                  color: item.color.withOpacity(0.18),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: item.color.withOpacity(0.10),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: item.color.withOpacity(0.09),
+                    blurRadius: 16,
+                    offset: const Offset(0, 7),
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    height: 60.h,
+                    height: 46.h,
                     width: 60.w,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(13.r),
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -407,43 +337,38 @@ class Dhashoard extends GetView<DashboardScreenController> {
                       boxShadow: [
                         BoxShadow(
                           color: item.color.withOpacity(0.25),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
                     child: Icon(
                       item.image,
-                      size: 28.sp,
+                      size: 22.sp,
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(height: 14.h),
                   Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        SizedBox(height: 5.h),
-                        Text(
-                          item.count.isEmpty ? "0" : item.count,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1D2433),
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    _formatCount(item.count),
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      color: const Color(0xFF0F172A),
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
@@ -453,5 +378,14 @@ class Dhashoard extends GetView<DashboardScreenController> {
         },
       );
     });
+  }
+
+  String _formatCount(String count) {
+    final value = int.tryParse(count) ?? 0;
+    final text = value.toString();
+    return text.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => ',',
+    );
   }
 }

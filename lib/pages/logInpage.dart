@@ -330,13 +330,13 @@ class LoginScreen extends GetView<LogInPageController> {
                                       );
 
                                       final Map<String, dynamic> requestData = {
-                                        "UserName": username,
+                                        "Userid": username,
                                         "Password": password,
                                       };
 
                                       await loginViewModel.loginApi(
                                         requestData,
-                                        controller.baseUrl.value,
+                                        controller.secUrl.value,
                                       );
                                     },
                                     child: Container(

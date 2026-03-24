@@ -38,6 +38,8 @@ static String fcmToken = "";
 static String UserPass = "UserPass";
 static String UserName = "UserName";
 static String SchoolId = "SchoolId";
+static String islogin = "islogin";
+
 static String classid = "classid";
 static String sectionid = "sectionid";
 

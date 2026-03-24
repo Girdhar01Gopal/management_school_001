@@ -38,11 +38,29 @@ class LoginViewModel with ChangeNotifier {
         return;
       }
 
-      if (loginResponse.data!.action.toString() == "0") {
+      if (loginResponse.data!.schoolId.toString() != "0") {
         await PrefManager().clearPref();
         ShortMessage.toast(title: "Cannot login. User is inactive");
         controller.isLoading.value = false;
-        Get.offAllNamed(RouteName.login_screen);
+        await PrefManager().writeValue(
+        key: PrefConst.islogin,
+        value: "true",
+      );
+       controller.isLoading.value = false;
+        await PrefManager().writeValue(
+        key: PrefConst.SchoolId,
+        value: loginResponse.data!.schoolId.toString(),
+      );
+          await PrefManager().writeValue(
+        key: PrefConst.Session,
+        value: loginResponse.data!.schoolId.toString(),
+      );
+       controller.isLoading.value = false;
+        await PrefManager().writeValue(
+        key: PrefConst.islogin,
+        value: "true",
+      );
+        Get.offAllNamed(RouteName.dashboard_screen);
         return;
       }
 
@@ -66,31 +84,6 @@ class LoginViewModel with ChangeNotifier {
       );
 
       await PrefManager().writeValue(
-        key: PrefConst.Session,
-        value: loginResponse.data!.session?.toString() ?? "",
-      );
-
-      await PrefManager().writeValue(
-        key: PrefConst.fatherName,
-        value: loginResponse.data!.fatherName?.toString() ?? "",
-      );
-
-      await PrefManager().writeValue(
-        key: PrefConst.fathenumber,
-        value: loginResponse.data!.fMobileno?.toString() ?? "",
-      );
-
-      await PrefManager().writeValue(
-        key: PrefConst.classid,
-        value: loginResponse.data!.classId?.toString() ?? "",
-      );
-
-      await PrefManager().writeValue(
-        key: PrefConst.sectionid,
-        value: loginResponse.data!.sectionId?.toString() ?? "",
-      );
-
-      await PrefManager().writeValue(
         key: PrefConst.loginValue,
         value: "yes",
       );
@@ -101,10 +94,9 @@ class LoginViewModel with ChangeNotifier {
 
       if (kDebugMode) {
         print("Login Success");
-        print("Session => ${loginResponse.data!.session}");
+   
         print("SchoolId => $schoolId");
-        print("ClassId => ${loginResponse.data!.classId}");
-        print("SectionId => ${loginResponse.data!.sectionId}");
+   
         print("BaseUrl => ${controller.baseUrl.value}");
       }
 
