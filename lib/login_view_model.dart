@@ -60,7 +60,9 @@ class LoginViewModel with ChangeNotifier {
         key: PrefConst.islogin,
         value: "true",
       );
-        Get.offAllNamed(RouteName.dashboard_screen);
+          Get.offAllNamed(RouteName.dashboard_screen,arguments: {
+           "url": url
+          });
         return;
       }
 
