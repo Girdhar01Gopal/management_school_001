@@ -117,6 +117,20 @@ class DashboardScreenController extends GetxController {
   List<DashboardTile> _buildDashboardTiles(SchoolManagementData item) {
     return [
       DashboardTile(
+        name: "Today Collection",
+        count: (item.todayTotelFee ?? 0).toString(),
+        image: Icons.payments_rounded,
+        color: const Color(0xFF16A34A),
+        gradientColors: const [Color(0xFF22C55E), Color(0xFF15803D)],
+      ),
+      DashboardTile(
+        name: "Monthly Collection",
+        count: (item.totelmonthsFee ?? 0).toString(),
+        image: Icons.calendar_month_rounded,
+        color: const Color(0xFFD97706),
+        gradientColors: const [Color(0xFFF59E0B), Color(0xFFB45309)],
+      ),
+      DashboardTile(
         name: "Total Students",
         count: (item.totalstudents ?? 0).toString(),
         image: Icons.groups_rounded,
@@ -158,20 +172,8 @@ class DashboardScreenController extends GetxController {
         color: const Color(0xFFDB2777),
         gradientColors: const [Color(0xFFEC4899), Color(0xFFBE185D)],
       ),
-      DashboardTile(
-        name: "Today's Fee",
-        count: (item.todayTotelFee ?? 0).toString(),
-        image: Icons.payments_rounded,
-        color: const Color(0xFF16A34A),
-        gradientColors: const [Color(0xFF22C55E), Color(0xFF15803D)],
-      ),
-      DashboardTile(
-        name: "Month Fee",
-        count: (item.totelmonthsFee ?? 0).toString(),
-        image: Icons.calendar_month_rounded,
-        color: const Color(0xFFD97706),
-        gradientColors: const [Color(0xFFF59E0B), Color(0xFFB45309)],
-      ),
+
+
       DashboardTile(
         name: "Transport Students",
         count: (item.transportstudents ?? 0).toString(),
@@ -179,20 +181,20 @@ class DashboardScreenController extends GetxController {
         color: const Color(0xFF6366F1),
         gradientColors: const [Color(0xFF818CF8), Color(0xFF4F46E5)],
       ),
-      DashboardTile(
-        name: "Total Result",
-        count: (item.totalResult ?? 0).toString(),
-        image: Icons.leaderboard_rounded,
-        color: const Color(0xFFDC2626),
-        gradientColors: const [Color(0xFFEF4444), Color(0xFFB91C1C)],
-      ),
-      DashboardTile(
-        name: "Defaulters",
-        count: (item.defaulterStudents ?? 0).toString(),
-        image: Icons.warning_amber_rounded,
-        color: const Color(0xFF7C3AED),
-        gradientColors: const [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-      ),
+      // DashboardTile(
+      //   name: "Total Result",
+      //   count: (item.totalResult ?? 0).toString(),
+      //   image: Icons.leaderboard_rounded,
+      //   color: const Color(0xFFDC2626),
+      //   gradientColors: const [Color(0xFFEF4444), Color(0xFFB91C1C)],
+      // ),
+      // DashboardTile(
+      //   name: "Defaulters",
+      //   count: (item.defaulterStudents ?? 0).toString(),
+      //   image: Icons.warning_amber_rounded,
+      //   color: const Color(0xFF7C3AED),
+      //   gradientColors: const [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+      // ),
       DashboardTile(
         name: "Due Amount",
         count: (item.dueAmount ?? 0).toString(),
