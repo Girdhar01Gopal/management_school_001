@@ -32,7 +32,7 @@ class DashboardScreenController extends GetxController {
   RxString errorMessage = ''.obs;
 
   RxString schoolName = "".obs;
-  RxString session = "2026-27".obs;
+  RxString session = "2025-26".obs;
   RxString schoolId = "".obs;
   RxString userName = "".obs;
   RxString siblingCount = "".obs;

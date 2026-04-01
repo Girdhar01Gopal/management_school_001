@@ -171,7 +171,10 @@ class Dhashoard extends GetView<DashboardScreenController> {
             child: IconButton(
               padding: EdgeInsets.zero,
               onPressed: () {
-                Get.toNamed(RouteName.login_screen);
+                Get.toNamed(
+                  RouteName.notification_dashboard_screen,
+                  arguments: {"url": controller.secUrl.value},
+                );
               },
               icon: const Icon(
                 Icons.notifications_active,
