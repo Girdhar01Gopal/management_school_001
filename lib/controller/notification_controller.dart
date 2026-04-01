@@ -28,9 +28,6 @@ class NotificationDashboardController extends GetxController {
   TextEditingController searchController = TextEditingController();
   RxBool isSearchVisible = false.obs;
 
-  static const String currentSessionApi =
-      "https://school.eduagentapp.com/api/FMSCoreApi/GetCurrentSession";
-
   @override
   void onInit() async {
     super.onInit();
@@ -54,7 +51,19 @@ class NotificationDashboardController extends GetxController {
 
   Future<void> fetchCurrentSession() async {
     try {
-      final response = await http.get(Uri.parse(currentSessionApi));
+      if (secUrl.value.isEmpty) {
+        secUrl.value =
+            await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
+      }
+
+      if (secUrl.value.isNotEmpty && !secUrl.value.endsWith('/')) {
+        secUrl.value = "${secUrl.value}/";
+      }
+
+      final url = "${secUrl.value}api/FMSCoreApi/GetCurrentSession";
+      debugPrint("Session URL => $url");
+
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final sessionResponse =
@@ -85,6 +94,10 @@ class NotificationDashboardController extends GetxController {
         notificationList.clear();
         filteredNotificationList.clear();
         return;
+      }
+
+      if (secUrl.value.isNotEmpty && !secUrl.value.endsWith('/')) {
+        secUrl.value = "${secUrl.value}/";
       }
 
       if (schoolId.value.isEmpty) {
@@ -165,6 +178,10 @@ class NotificationDashboardController extends GetxController {
     if (secUrl.value.isEmpty) {
       secUrl.value =
           await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
+    }
+
+    if (secUrl.value.isNotEmpty && !secUrl.value.endsWith('/')) {
+      secUrl.value = "${secUrl.value}/";
     }
 
     debugPrint("schoolName => ${schoolName.value}");

@@ -42,8 +42,7 @@ class DashboardScreenController extends GetxController {
 
   RxList<DashboardTile> filteredList = <DashboardTile>[].obs;
 
-  static const String currentSessionApi =
-      "https://school.eduagentapp.com/api/FMSCoreApi/GetCurrentSession";
+
 
   @override
   void onInit() async {
@@ -172,9 +171,19 @@ class DashboardScreenController extends GetxController {
 
   Future<void> fetchCurrentSession() async {
     try {
-      print("Session URL => $currentSessionApi");
+      if (secUrl.value.isEmpty) {
+        secUrl.value =
+            await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
+      }
 
-      final response = await http.get(Uri.parse(currentSessionApi));
+      if (secUrl.value.isNotEmpty && !secUrl.value.endsWith('/')) {
+        secUrl.value = "${secUrl.value}/";
+      }
+
+      final url = "${secUrl.value}api/FMSCoreApi/GetCurrentSession";
+      print("Session URL => $url");
+
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final sessionResponse =
