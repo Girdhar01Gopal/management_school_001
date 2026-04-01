@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../controller/home_page_controller.dart';
+import '../infrastructures/routes/page_constants.dart';
 
 class Dhashoard extends GetView<DashboardScreenController> {
   const Dhashoard({super.key});
@@ -10,7 +11,8 @@ class Dhashoard extends GetView<DashboardScreenController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F5FA),
+      backgroundColor: Colors.grey[100],
+      appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(
@@ -52,12 +54,12 @@ class Dhashoard extends GetView<DashboardScreenController> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               child: SafeArea(
+                top: false,
                 bottom: true,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildActionRow(context),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 4.h),
                     _buildKpiStrip(),
                     SizedBox(height: 18.h),
                     _buildSectionTitle("Dashboard Overview"),
@@ -74,76 +76,109 @@ class Dhashoard extends GetView<DashboardScreenController> {
     );
   }
 
-  Widget _buildActionRow(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                controller.schoolName.value.isEmpty
-                    ? "School Dashboard"
-                    : controller.schoolName.value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF152238),
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                "Session ${controller.session.value}",
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF5B6475),
-                ),
-              ),
-            ],
-          ),
-        ),
-   
-        SizedBox(width: 10.w),
-        Container(
-          height: 44.h,
-          width: 60.w,
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      automaticallyImplyLeading: false,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: const Color(0xFF2C4A6B),
+      toolbarHeight: 60.h,
+      leadingWidth: 56.w,
+
+      // LEFT SIDE (Logout)
+      leading: Padding(
+        padding: EdgeInsets.only(left: 12.w, top: 6.h, bottom: 6.h),
+        child: Container(
+          height: 40.h,
+          width: 40.w,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(12.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 7),
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
-          child: PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded),
-            color: Colors.white,
-            onSelected: (value) async {
-              if (value == "logout") {
-                final shouldLogout = await _showLogoutDialog(context);
-                if (shouldLogout == true) {
-                  controller.logoutUser();
-                }
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            onPressed: () async {
+              final shouldLogout = await _showLogoutDialog(context);
+              if (shouldLogout == true) {
+                controller.logoutUser();
               }
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem<String>(
-                value: "logout",
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 10),
-                    Text("Logout"),
-                  ],
-                ),
+            icon: const Icon(
+              Icons.logout_rounded,
+              color: Colors.red,
+              size: 22,
+            ),
+          ),
+        ),
+      ),
+
+      // CENTER TITLE
+      centerTitle: true,
+      title: Obx(
+            () => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              controller.schoolName.value.isEmpty
+                  ? "School Dashboard"
+                  : controller.schoolName.value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
               ),
-            ],
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              "Session ${controller.session.value}",
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.white70,
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      // RIGHT SIDE (Notification)
+      actions: [
+        Padding(
+          padding: EdgeInsets.only(right: 12.w),
+          child: Container(
+            height: 40.h,
+            width: 40.w,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                Get.toNamed(RouteName.login_screen);
+              },
+              icon: const Icon(
+                Icons.notifications_active,
+                color: Color(0xFF2C4A6B),
+                size: 22,
+              ),
+            ),
           ),
         ),
       ],
@@ -385,7 +420,7 @@ class Dhashoard extends GetView<DashboardScreenController> {
     final text = value.toString();
     return text.replaceAllMapped(
       RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => ',',
+          (match) => ',',
     );
   }
 }

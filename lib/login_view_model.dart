@@ -39,30 +39,34 @@ class LoginViewModel with ChangeNotifier {
       }
 
       if (loginResponse.data!.schoolId.toString() != "0") {
-        await PrefManager().clearPref();
-        ShortMessage.toast(title: "Cannot login. User is inactive");
+        ShortMessage.toast(title: "Login Successfully");
+
         controller.isLoading.value = false;
+
         await PrefManager().writeValue(
-        key: PrefConst.islogin,
-        value: "true",
-      );
-       controller.isLoading.value = false;
+          key: PrefConst.islogin,
+          value: "true",
+        );
+
         await PrefManager().writeValue(
-        key: PrefConst.SchoolId,
-        value: loginResponse.data!.schoolId.toString(),
-      );
-          await PrefManager().writeValue(
-        key: PrefConst.Session,
-        value: loginResponse.data!.schoolId.toString(),
-      );
-       controller.isLoading.value = false;
+          key: PrefConst.SchoolId,
+          value: loginResponse.data!.schoolId.toString(),
+        );
+
         await PrefManager().writeValue(
-        key: PrefConst.islogin,
-        value: "true",
-      );
-          Get.offAllNamed(RouteName.dashboard_screen,arguments: {
-           "url": url
-          });
+          key: PrefConst.UserName,
+          value: controller.userNamecontroller.text.trim(),
+        );
+
+        await PrefManager().writeValue(
+          key: PrefConst.UserPass,
+          value: controller.userPasswordcontroller.text.trim(),
+        );
+
+        Get.offAllNamed(
+          RouteName.dashboard_screen,
+          arguments: {"url": url},
+        );
         return;
       }
 

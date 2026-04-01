@@ -32,7 +32,7 @@ class DashboardScreenController extends GetxController {
   RxString errorMessage = ''.obs;
 
   RxString schoolName = "".obs;
-  RxString session = "2025-26".obs;
+  RxString session = "2026-27".obs;
   RxString schoolId = "".obs;
   RxString userName = "".obs;
   RxString siblingCount = "".obs;
@@ -42,15 +42,32 @@ class DashboardScreenController extends GetxController {
 
   RxList<DashboardTile> filteredList = <DashboardTile>[].obs;
 
+  // @override
+  // void onInit() async{
+  //   super.onInit();
+  //   final args = Get.arguments;
+  //
+  //   if (args != null) {
+  //     secUrl.value = args["url"] ?? "";}
+  //   print("url is ${secUrl.value}");
+  //   schoolId.value = await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
+  //   await fetchDashboardData();
+  // }
   @override
-  void onInit() async{
+  void onInit() async {
     super.onInit();
     final args = Get.arguments;
 
-    if (args != null) {
-      secUrl.value = args["url"] ?? "";}
+    if (args != null && args["url"] != null) {
+      secUrl.value = args["url"].toString();
+    }
+
+    await loadSchoolHeaderData();
+
     print("url is ${secUrl.value}");
-    schoolId.value = await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
+    schoolId.value =
+        await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
+
     await fetchDashboardData();
   }
 
@@ -205,28 +222,29 @@ class DashboardScreenController extends GetxController {
 
 
 
-  // Future<void> loadSchoolHeaderData() async {
-  //   schoolName.value =
-  //       await PrefManager().readValue(key: PrefConst.schoolname) ?? "";
-  //
-  //   schoolId.value =
-  //       await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
-  //
-  //   userName.value =
-  //       await PrefManager().readValue(key: PrefConst.UserName) ?? "";
-  //
-  //   schoolLogo.value =
-  //       await PrefManager().readValue(key: PrefConst.schoolImage) ?? "";
-  //
-  //   secUrl.value =
-  //       await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
-  //
-  //   debugPrint("schoolName => ${schoolName.value}");
-  //   debugPrint("schoolId => ${schoolId.value}");
-  //   debugPrint("schoolLogo => ${schoolLogo.value}");
-  //   debugPrint("secUrl => ${secUrl.value}");
-  //   debugPrint("finalLogoUrl => $schoolLogoUrl");
-  // }
+  Future<void> loadSchoolHeaderData() async {
+    schoolName.value =
+        await PrefManager().readValue(key: PrefConst.schoolname) ?? "";
+
+    schoolId.value =
+        await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
+
+    userName.value =
+        await PrefManager().readValue(key: PrefConst.UserName) ?? "";
+
+    schoolLogo.value =
+        await PrefManager().readValue(key: PrefConst.schoolImage) ?? "";
+
+    if (secUrl.value.isEmpty) {
+      secUrl.value =
+          await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
+    }
+
+    debugPrint("schoolName => ${schoolName.value}");
+    debugPrint("schoolId => ${schoolId.value}");
+    debugPrint("schoolLogo => ${schoolLogo.value}");
+    debugPrint("secUrl => ${secUrl.value}");
+  }
 
   String get schoolLogoUrl {
     if (secUrl.value.isEmpty || schoolLogo.value.isEmpty) return "";
