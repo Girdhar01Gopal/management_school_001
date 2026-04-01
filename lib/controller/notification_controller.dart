@@ -8,13 +8,14 @@ import 'package:share_plus/share_plus.dart';
 import '../local_storage/local_storage.dart';
 import '../local_storage/pref_const.dart';
 import '../models/notification_model.dart';
+import '../models/session_model.dart';
 
 class NotificationDashboardController extends GetxController {
   RxBool isLoading = false.obs;
   RxString errorMessage = ''.obs;
 
   RxString schoolName = "".obs;
-  RxString session = "2025-26".obs;
+  RxString session = "".obs;
   RxString schoolId = "".obs;
   RxString userName = "".obs;
 
@@ -27,6 +28,9 @@ class NotificationDashboardController extends GetxController {
   TextEditingController searchController = TextEditingController();
   RxBool isSearchVisible = false.obs;
 
+  static const String currentSessionApi =
+      "https://school.eduagentapp.com/api/FMSCoreApi/GetCurrentSession";
+
   @override
   void onInit() async {
     super.onInit();
@@ -38,6 +42,7 @@ class NotificationDashboardController extends GetxController {
     }
 
     await loadSchoolHeaderData();
+    await fetchCurrentSession();
     await fetchNotifications();
   }
 
@@ -45,6 +50,29 @@ class NotificationDashboardController extends GetxController {
   void onClose() {
     searchController.dispose();
     super.onClose();
+  }
+
+  Future<void> fetchCurrentSession() async {
+    try {
+      final response = await http.get(Uri.parse(currentSessionApi));
+
+      if (response.statusCode == 200) {
+        final sessionResponse =
+        SessionResponseModel.fromJson(jsonDecode(response.body));
+
+        if (sessionResponse.statuscode == 200 &&
+            sessionResponse.data != null &&
+            sessionResponse.data!.isNotEmpty) {
+          session.value = sessionResponse.data!.first.session?.trim() ?? "";
+        }
+
+        debugPrint("Current Session => ${session.value}");
+      } else {
+        debugPrint("Session API failed: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("session error => $e");
+    }
   }
 
   Future<void> fetchNotifications() async {
@@ -61,6 +89,13 @@ class NotificationDashboardController extends GetxController {
 
       if (schoolId.value.isEmpty) {
         errorMessage.value = "School ID not found";
+        notificationList.clear();
+        filteredNotificationList.clear();
+        return;
+      }
+
+      if (session.value.isEmpty) {
+        errorMessage.value = "Session not found";
         notificationList.clear();
         filteredNotificationList.clear();
         return;
@@ -109,6 +144,8 @@ class NotificationDashboardController extends GetxController {
     searchController.clear();
     isSearchVisible.value = false;
     filteredNotificationList.assignAll(notificationList);
+
+    await fetchCurrentSession();
     await fetchNotifications();
   }
 

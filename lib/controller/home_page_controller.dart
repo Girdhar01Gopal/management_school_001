@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:management_school/models/school_management_model.dart';
+import 'package:management_school/models/session_model.dart';
+import 'package:http/http.dart' as http;
 
 import '../infrastructures/routes/page_constants.dart';
 import '../local_storage/local_storage.dart';
 import '../local_storage/pref_const.dart';
 import '../repo/app_url.dart';
-import 'package:http/http.dart' as http;
 
 class DashboardTile {
   final String name;
@@ -26,13 +27,12 @@ class DashboardTile {
   });
 }
 
-
 class DashboardScreenController extends GetxController {
   RxBool isLoading = false.obs;
   RxString errorMessage = ''.obs;
 
   RxString schoolName = "".obs;
-  RxString session = "2025-26".obs;
+  RxString session = "".obs;
   RxString schoolId = "".obs;
   RxString userName = "".obs;
   RxString siblingCount = "".obs;
@@ -42,38 +42,55 @@ class DashboardScreenController extends GetxController {
 
   RxList<DashboardTile> filteredList = <DashboardTile>[].obs;
 
-  // @override
-  // void onInit() async{
-  //   super.onInit();
-  //   final args = Get.arguments;
-  //
-  //   if (args != null) {
-  //     secUrl.value = args["url"] ?? "";}
-  //   print("url is ${secUrl.value}");
-  //   schoolId.value = await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
-  //   await fetchDashboardData();
-  // }
+  static const String currentSessionApi =
+      "https://school.eduagentapp.com/api/FMSCoreApi/GetCurrentSession";
+
   @override
   void onInit() async {
     super.onInit();
+
     final args = Get.arguments;
 
     if (args != null && args["url"] != null) {
-      secUrl.value = args["url"].toString();
+      secUrl.value = args["url"].toString().trim();
     }
 
     await loadSchoolHeaderData();
 
-    print("url is ${secUrl.value}");
     schoolId.value =
         await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
 
+    await fetchCurrentSession();
     await fetchDashboardData();
   }
 
   Future<void> fetchDashboardData() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = "";
 
-    await loadDashboardData();
+      if (schoolId.value.isEmpty) {
+        schoolId.value =
+            await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
+      }
+
+      if (secUrl.value.isEmpty) {
+        secUrl.value =
+            await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
+      }
+
+      if (secUrl.value.isNotEmpty && !secUrl.value.endsWith('/')) {
+        secUrl.value = "${secUrl.value}/";
+      }
+
+      await fetchCurrentSession();
+      await loadDashboardData();
+    } catch (e) {
+      errorMessage.value = "Error: $e";
+      debugPrint("fetchDashboardData error => $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> loadDashboardData() async {
@@ -81,9 +98,45 @@ class DashboardScreenController extends GetxController {
       isLoading.value = true;
       errorMessage.value = "";
 
-      final url = "${secUrl.value}api/FMSCoreApi/GetTotalCount/${session.value}/${schoolId.value}";
+      if (schoolId.value.isEmpty) {
+        schoolId.value =
+            await PrefManager().readValue(key: PrefConst.SchoolId) ?? "";
+      }
 
-      print(secUrl.value);
+      if (secUrl.value.isEmpty) {
+        secUrl.value =
+            await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
+      }
+
+      if (secUrl.value.isNotEmpty && !secUrl.value.endsWith('/')) {
+        secUrl.value = "${secUrl.value}/";
+      }
+
+
+
+      if (secUrl.value.isEmpty) {
+        filteredList.clear();
+        errorMessage.value = "Base URL not found";
+        return;
+      }
+
+      if (schoolId.value.isEmpty) {
+        filteredList.clear();
+        errorMessage.value = "SchoolId not found";
+        return;
+      }
+
+      if (session.value.isEmpty) {
+        filteredList.clear();
+        errorMessage.value = "Session not found";
+        return;
+      }
+
+      final url =
+          "${secUrl.value}api/FMSCoreApi/GetTotalCount/${session.value}/${schoolId.value}";
+
+      print("Dashboard URL => $url");
+
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -91,7 +144,8 @@ class DashboardScreenController extends GetxController {
         SchoolManagementModel.fromJson(jsonDecode(response.body));
 
         final SchoolManagementData? dashboardData =
-        (dashboardResponse.data != null && dashboardResponse.data!.isNotEmpty)
+        (dashboardResponse.data != null &&
+            dashboardResponse.data!.isNotEmpty)
             ? dashboardResponse.data!.first
             : null;
 
@@ -103,14 +157,41 @@ class DashboardScreenController extends GetxController {
 
         filteredList.value = _buildDashboardTiles(dashboardData);
       } else {
+        filteredList.clear();
         errorMessage.value =
         "Failed to load dashboard data: ${response.statusCode}";
       }
     } catch (e) {
+      filteredList.clear();
       errorMessage.value = "Error loading dashboard data: $e";
       debugPrint("Error loading dashboard data: $e");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchCurrentSession() async {
+    try {
+      print("Session URL => $currentSessionApi");
+
+      final response = await http.get(Uri.parse(currentSessionApi));
+
+      if (response.statusCode == 200) {
+        final sessionResponse =
+        SessionResponseModel.fromJson(jsonDecode(response.body));
+
+        if (sessionResponse.statuscode == 200 &&
+            sessionResponse.data != null &&
+            sessionResponse.data!.isNotEmpty) {
+          session.value = sessionResponse.data!.first.session?.trim() ?? "";
+        }
+
+        print("Current Session => ${session.value}");
+      } else {
+        debugPrint("Session API failed: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("session error $e");
     }
   }
 
@@ -172,8 +253,6 @@ class DashboardScreenController extends GetxController {
         color: const Color(0xFFDB2777),
         gradientColors: const [Color(0xFFEC4899), Color(0xFFBE185D)],
       ),
-
-
       DashboardTile(
         name: "Transport Students",
         count: (item.transportstudents ?? 0).toString(),
@@ -181,20 +260,6 @@ class DashboardScreenController extends GetxController {
         color: const Color(0xFF6366F1),
         gradientColors: const [Color(0xFF818CF8), Color(0xFF4F46E5)],
       ),
-      // DashboardTile(
-      //   name: "Total Result",
-      //   count: (item.totalResult ?? 0).toString(),
-      //   image: Icons.leaderboard_rounded,
-      //   color: const Color(0xFFDC2626),
-      //   gradientColors: const [Color(0xFFEF4444), Color(0xFFB91C1C)],
-      // ),
-      // DashboardTile(
-      //   name: "Defaulters",
-      //   count: (item.defaulterStudents ?? 0).toString(),
-      //   image: Icons.warning_amber_rounded,
-      //   color: const Color(0xFF7C3AED),
-      //   gradientColors: const [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-      // ),
       DashboardTile(
         name: "Due Amount",
         count: (item.dueAmount ?? 0).toString(),
@@ -222,8 +287,6 @@ class DashboardScreenController extends GetxController {
     Get.offAllNamed(RouteName.login_screen);
   }
 
-
-
   Future<void> loadSchoolHeaderData() async {
     schoolName.value =
         await PrefManager().readValue(key: PrefConst.schoolname) ?? "";
@@ -240,6 +303,10 @@ class DashboardScreenController extends GetxController {
     if (secUrl.value.isEmpty) {
       secUrl.value =
           await PrefManager().readValue(key: PrefConst.secUrlLocalSaved) ?? "";
+    }
+
+    if (secUrl.value.isNotEmpty && !secUrl.value.endsWith('/')) {
+      secUrl.value = "${secUrl.value}/";
     }
 
     debugPrint("schoolName => ${schoolName.value}");
