@@ -135,8 +135,8 @@ class HolidayDashboardScreen extends GetView<HolidayDashboardController> {
                               CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  height: 46.h,
-                                  width: 46.w,
+                                  height: 35.h,
+                                  width: 35.w,
                                   decoration: BoxDecoration(
                                     borderRadius:
                                     BorderRadius.circular(14.r),
@@ -150,7 +150,7 @@ class HolidayDashboardScreen extends GetView<HolidayDashboardController> {
                                   child: Icon(
                                     Icons.event_available_rounded,
                                     color: Colors.white,
-                                    size: 22.sp,
+                                    size: 18.sp,
                                   ),
                                 ),
                                 SizedBox(width: 12.w),
@@ -188,13 +188,13 @@ class HolidayDashboardScreen extends GetView<HolidayDashboardController> {
                               ],
                             ),
 
-                            SizedBox(height: 14.h),
+                            SizedBox(height: 2.h),
 
                             Container(
                               width: double.infinity,
                               padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
+                                horizontal: 1.w,
+                                vertical: 1.h,
                               ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF8FAFC),
@@ -204,29 +204,7 @@ class HolidayDashboardScreen extends GetView<HolidayDashboardController> {
                                 crossAxisAlignment:
                                 CrossAxisAlignment.start,
                                 children: [
-                                  _detailRow("Holiday ID", "${item.hdId ?? 0}"),
-                                  _detailRow(
-                                    "Holiday Date",
-                                    controller.formatDate(item.dateHoliday ?? ""),
-                                  ),
-                                  _detailRow(
-                                    "Created By",
-                                    controller.getCreatedBy(item),
-                                  ),
-                                  _detailRow(
-                                    "Updated By",
-                                    (item.updateBy ?? "").trim().isEmpty
-                                        ? "N/A"
-                                        : item.updateBy!,
-                                  ),
-                                  _detailRow(
-                                    "Action",
-                                    "${item.action ?? 0}",
-                                  ),
-                                  _detailRow(
-                                    "Status",
-                                    controller.getStatusText(item),
-                                  ),
+
                                 ],
                               ),
                             ),
