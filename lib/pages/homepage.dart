@@ -274,12 +274,6 @@ class _DashBody extends StatelessWidget {
                 children: [
                   const _HeaderBanner(),
                   SizedBox(height: 22.h),
-
-                  // _SectionLabel(label: "Quick Stats"),
-                  // SizedBox(height: 12.h),
-                  // _KpiStrip(controller: controller),
-                  // SizedBox(height: 26.h),
-
                   _SectionLabel(label: "Dashboard Overview"),
                   SizedBox(height: 14.h),
                 ],
@@ -839,6 +833,15 @@ class _GridCardState extends State<_GridCard>
     final List<Color> grad =
         item.gradientColors ?? [item.color.withOpacity(0.85), item.color];
 
+    // ── Nav tile (arrow card) has a different layout ──────────────────────
+    if (item.isNavTile == true) {
+      return _NavGridCard(
+        item: item,
+        grad: grad,
+        onTap: widget.onTap,
+      );
+    }
+
     return GestureDetector(
       onTapDown: (_) {
         _c.forward();
@@ -859,7 +862,7 @@ class _GridCardState extends State<_GridCard>
           duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.symmetric(
             horizontal: _DS.gridCardPadding.w,
-            vertical: 10.h,
+            vertical: 8.h,
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18.r),
@@ -878,15 +881,14 @@ class _GridCardState extends State<_GridCard>
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-
               // top row: icon + name
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(5.r),
+                    padding: EdgeInsets.all(4.r),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.22),
                       borderRadius: BorderRadius.circular(8.r),
@@ -894,17 +896,17 @@ class _GridCardState extends State<_GridCard>
                     child: Icon(
                       item.image,
                       color: Colors.white,
-                      size: 30.sp, // ❌ same as before (NO change)
+                      size: 16.sp,
                     ),
                   ),
-                  SizedBox(width: 7.w),
+                  SizedBox(width: 6.w),
                   Expanded(
                     child: Text(
                       item.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 15.sp, // ✅ text bigger
+                        fontSize: 11.sp,
                         color: Colors.white.withOpacity(0.92),
                         fontWeight: FontWeight.w700,
                         height: 1.2,
@@ -915,23 +917,187 @@ class _GridCardState extends State<_GridCard>
                 ],
               ),
 
-              // center count
-              Center(
-                child: _CountUp(
-                  target: int.tryParse(item.count) ?? 0,
-                  style: TextStyle(
-                    fontSize: 24.sp, // ✅ count bigger
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    height: 1.0,
+              // center count — Expanded so it takes remaining space
+              Expanded(
+                child: Center(
+                  child: _CountUp(
+                    target: int.tryParse(item.count) ?? 0,
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                      height: 1.0,
+                    ),
                   ),
                 ),
               ),
 
               // bottom line
               Container(
-                height: 2.5.h,
+                height: 2.h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4.r),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.12),
+                      Colors.white.withOpacity(0.55),
+                      Colors.white.withOpacity(0.12),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Nav Grid Card (All Month Report — arrow only, no count) ─────────────────
+class _NavGridCard extends StatefulWidget {
+  final dynamic item;
+  final List<Color> grad;
+  final VoidCallback onTap;
+  const _NavGridCard({
+    required this.item,
+    required this.grad,
+    required this.onTap,
+  });
+
+  @override
+  State<_NavGridCard> createState() => _NavGridCardState();
+}
+
+class _NavGridCardState extends State<_NavGridCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _c;
+  late Animation<double> _scale;
+  bool _pressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 140),
+    );
+    _scale = Tween(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _c, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+
+    return GestureDetector(
+      onTapDown: (_) {
+        _c.forward();
+        setState(() => _pressed = true);
+      },
+      onTapUp: (_) {
+        _c.reverse();
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () {
+        _c.reverse();
+        setState(() => _pressed = false);
+      },
+      child: ScaleTransition(
+        scale: _scale,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(
+            horizontal: _DS.gridCardPadding.w,
+            vertical: 8.h,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.r),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: widget.grad,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: item.color.withOpacity(_pressed ? 0.35 : 0.22),
+                blurRadius: _pressed ? 20 : 14,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // top row: icon + name
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(4.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.22),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Icon(
+                      item.image,
+                      color: Colors.white,
+                      size: 16.sp,
+                    ),
+                  ),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.white.withOpacity(0.92),
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // center: forward arrow — Expanded so it takes remaining space
+              Expanded(
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.all(7.r),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.18),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.35),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 18.sp,
+                    ),
+                  ),
+                ),
+              ),
+
+              // bottom line
+              Container(
+                height: 2.h,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4.r),
                   gradient: LinearGradient(
@@ -1014,23 +1180,6 @@ class _ShimmerSkeleton extends StatelessWidget {
           children: [
             _ShimBox(height: 72.h, radius: 20.r),
             SizedBox(height: 22.h),
-
-            // _ShimBox(height: 14.h, width: 100.w, radius: 8.r),
-            // SizedBox(height: 12.h),
-            // SizedBox(
-            //   height: 112.h,
-            //   child: Row(
-            //     children: List.generate(
-            //       3,
-            //       (i) => Padding(
-            //         padding: EdgeInsets.only(right: 10.w),
-            //         child: _ShimBox(width: 148.w, height: 112.h, radius: 18.r),
-            //       ),
-            //     ),
-            //   ),
-            // ),
-            // SizedBox(height: 26.h),
-
             _ShimBox(height: 14.h, width: 140.w, radius: 8.r),
             SizedBox(height: 14.h),
             Expanded(

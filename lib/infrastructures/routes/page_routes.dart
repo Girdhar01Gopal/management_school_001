@@ -1,11 +1,13 @@
 import 'package:get/get.dart';
 import 'package:management_school/infrastructures/routes/page_constants.dart';
 
+import '../../binding/SessionMonthWiseFeebinding.dart';
 import '../../binding/dashboard_screen_binding.dart';
 import '../../binding/holiday_binding.dart';
 import '../../binding/login_screen_binding.dart';
 import '../../binding/notification_binding.dart';
 import '../../binding/splash_screen_bindings.dart';
+import '../../pages/SessionMonthWiseFeeScreen.dart';
 import '../../pages/holiday_screen.dart';
 import '../../pages/homepage.dart';
 import '../../pages/logInpage.dart';
@@ -41,6 +43,13 @@ class AppRoutes {
       page: () =>  HolidayDashboardScreen(),
       transition: Transition.rightToLeft,
       binding: HolidayDashboardBinding(),
+    ),
+
+    GetPage(
+      name: RouteName.session_month_wise_data,
+      page: () =>  SessionMonthWiseFeeScreen(),
+      transition: Transition.rightToLeft,
+      binding: SessionMonthWiseFeeBinding(),
     ),
 
     GetPage(
