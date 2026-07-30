@@ -7,5 +7,7 @@ class RouteName {
   static const String holiday_dashboard_screen = '/holiday_dashboard_screen';
   static const String session_month_wise_data = '/session_month_wise_data';
 
+  static const String till_month_fee_status_screen = '/till_month_fee_status_screen';
+
 
 }

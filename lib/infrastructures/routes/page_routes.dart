@@ -2,12 +2,14 @@ import 'package:get/get.dart';
 import 'package:management_school/infrastructures/routes/page_constants.dart';
 
 import '../../binding/SessionMonthWiseFeebinding.dart';
+import '../../binding/TillMonthFeeStatusBinding.dart';
 import '../../binding/dashboard_screen_binding.dart';
 import '../../binding/holiday_binding.dart';
 import '../../binding/login_screen_binding.dart';
 import '../../binding/notification_binding.dart';
 import '../../binding/splash_screen_bindings.dart';
 import '../../pages/SessionMonthWiseFeeScreen.dart';
+import '../../pages/Till month fee status screen.dart';
 import '../../pages/holiday_screen.dart';
 import '../../pages/homepage.dart';
 import '../../pages/logInpage.dart';
@@ -57,6 +59,13 @@ class AppRoutes {
       page: () => Dhashoard(),
       transition: Transition.rightToLeft,
       binding: DashboardScreenBinding(),
+    ),
+
+    GetPage(
+      name: RouteName.till_month_fee_status_screen,
+      page: () => TillMonthFeeStatusScreen(),
+      transition: Transition.rightToLeft,
+      binding: TillMonthFeeStatusScreenBinding(),
     ),
 
   ];
