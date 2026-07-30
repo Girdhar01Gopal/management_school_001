@@ -96,12 +96,12 @@ class TillMonthFeeStatusController extends GetxController {
         );
 
         if (match == null) {
-          totalRow.value = null;
           errorMessage.value = "No dashboard data found";
           return;
         }
 
         totalRow.value = match;
+        errorMessage.value = "";
       } else {
         errorMessage.value =
         "Failed to load fee status: ${response.statusCode}";

@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../controller/Till month fee status controller.dart';
 
+
 /// Formats a number like 16214890.0 => "1,62,14,890.00"
 /// (Indian numbering system: last 3 digits together, then groups of 2)
 /// without pulling in intl.
@@ -59,8 +60,16 @@ class TillMonthFeeStatusScreen extends GetView<TillMonthFeeStatusController> {
       backgroundColor: _TMS.bg,
       appBar: _buildAppBar(context),
       body: Obx(() {
-        if (controller.isLoading.value) return const _ShimmerSkeleton();
-        if (controller.errorMessage.value.isNotEmpty) {
+        final bool hasData = controller.totalRow.value != null;
+
+        // Full-screen shimmer/error ONLY on the very first load (no data yet).
+        // Once data exists, pull-to-refresh / the AppBar refresh button
+        // should keep showing the current values while it re-fetches,
+        // instead of wiping the screen.
+        if (controller.isLoading.value && !hasData) {
+          return const _ShimmerSkeleton();
+        }
+        if (controller.errorMessage.value.isNotEmpty && !hasData) {
           return _ErrorState(
             message: controller.errorMessage.value,
             onRetry: controller.fetchTillMonthData,
@@ -151,10 +160,23 @@ class TillMonthFeeStatusScreen extends GetView<TillMonthFeeStatusController> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => controller.fetchTillMonthData(),
-                    icon: Icon(Icons.refresh_rounded,
-                        color: _TMS.gold, size: 20.sp),
+                  Obx(
+                        () => IconButton(
+                      onPressed: controller.isLoading.value
+                          ? null
+                          : () => controller.fetchTillMonthData(),
+                      icon: controller.isLoading.value
+                          ? SizedBox(
+                        width: 18.sp,
+                        height: 18.sp,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _TMS.gold,
+                        ),
+                      )
+                          : Icon(Icons.refresh_rounded,
+                          color: _TMS.gold, size: 20.sp),
+                    ),
                   ),
                 ],
               ),
