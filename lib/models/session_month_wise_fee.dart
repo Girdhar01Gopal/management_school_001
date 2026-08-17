@@ -303,3 +303,21 @@ class SessionMonthWiseFee {
         ')';
   }
 }
+
+// ============================================================
+// NEW: Helper model — groups multiple session-rows under a
+// single month (used so APR/MAY/JUN.. don't repeat as separate
+// blocks when the API returns more than one session's data for
+// the same month).
+// ============================================================
+class SessionMonthWiseFeeGroup {
+  final String monthName;
+  final int tillMonth;
+  final List<SessionMonthWiseFee> entries;
+
+  SessionMonthWiseFeeGroup({
+    required this.monthName,
+    required this.tillMonth,
+    required this.entries,
+  });
+}
