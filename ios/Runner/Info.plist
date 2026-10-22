@@ -2,10 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Management School</string>
+	<string>Eduagent Management</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>management_school</string>
+	<string>Eduagent Management</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -23,6 +25,42 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>MinimumOSVersion</key>
+	<string>15.0</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>yourdomain.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+		<string>_https._tcp</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Eduagent Management uses the camera to capture photos for verifying attendance records. Photos are stored securely and used only for attendance purposes.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Eduagent Management accesses the local network to sync attendance data with your organization's server.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Eduagent Management uses your location only while the app is open to verify that you are within the designated attendance zone. Location data is not stored beyond the check-in event.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Eduagent Management uses your location to verify attendance. Location data is collected only during check-in and is not stored permanently.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Eduagent Management may require microphone access for video conferencing or voice verification features.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Eduagent Management saves attendance-related photos to your photo library when you choose to export them.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Eduagent Management accesses your photo library only when you choose to upload an image for attendance verification.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -41,9 +79,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
 </dict>
 </plist>
