@@ -7,25 +7,25 @@ import '../controller/SessionMonthWiseFeecontroller.dart';
 import '../models/session_month_wise_fee.dart';
 
 
-// ── Design tokens (same palette as existing Dashboard) ─────────────────────
+// ── Design tokens (same palette as Dashboard) ───────────────────────────────
 class _DS {
-  static const bg      = Color(0xFF070D16);
-  static const surface = Color(0xFF0E1923);
-  static const card    = Color(0xFF111D2B);
-  static const border  = Color(0xFF1E3048);
-  static const cyan    = Color(0xFF00E5FF);
-  static const cyanDim = Color(0xFF00B8CC);
-  static const gold    = Color(0xFFFFCA28);
-  static const green   = Color(0xFF22C55E);
-  static const greenDk = Color(0xFF15803D);
-  static const blue    = Color(0xFF3B82F6);
-  static const blueDk  = Color(0xFF1D4ED8);
-  static const orange  = Color(0xFFFB923C);
-  static const orangeDk= Color(0xFFEA580C);
-  static const white   = Colors.white;
-  static const white70 = Color(0xB3FFFFFF);
-  static const white40 = Color(0x66FFFFFF);
-  static const white15 = Color(0x26FFFFFF);
+  static const bg       = Color(0xFFFFFFFF);
+  static const surface  = Color(0xFFF3EDF7);
+  static const card     = Color(0xFFF7F2FA);
+  static const border   = Color(0xFFE7E0EC);
+  static const cyan     = Color(0xFF4A4458);
+  static const cyanDim  = Color(0xFF7A7289);
+  static const gold     = Color(0xFFB8860B);
+  static const green    = Color(0xFF1F4A3D);
+  static const greenDk  = Color(0xFF16362C);
+  static const blue     = Color(0xFF23414F);
+  static const blueDk   = Color(0xFF1A303A);
+  static const orange   = Color(0xFF4A2E22);
+  static const orangeDk = Color(0xFF361F17);
+  static const white    = Color(0xFF1D1B20);
+  static const white70  = Color(0xFF49454F);
+  static const white40  = Color(0xFF79747E);
+  static const white15  = Color(0xFFE7E0EC);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -84,7 +84,7 @@ class SessionMonthWiseFeeScreen
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'ALL MONTH FEE REPORT',
+                          '📊 ALL MONTH FEE REPORT',
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w900,
@@ -138,12 +138,12 @@ class _Body extends StatelessWidget {
           ),
 
           // ── Summary Strip ─────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-              child: _SummaryStrip(controller: controller),
-            ),
-          ),
+          // SliverToBoxAdapter(
+          //   child: Padding(
+          //     padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+          //     child: _SummaryStrip(controller: controller),
+          //   ),
+          // ),
 
           // ── Section label ─────────────────────────────────────────────────
           SliverToBoxAdapter(
@@ -153,26 +153,30 @@ class _Body extends StatelessWidget {
             ),
           ),
 
-          // ── Month cards list ──────────────────────────────────────────────
+          // ── Month cards list (GROUPED by month) ─────────────────────────────
           Obx(() {
             if (controller.feeDataList.isEmpty) {
               return SliverToBoxAdapter(
                 child: _EmptyState(),
               );
             }
+            // 👉 Yaha se feeDataList ki jagah groupedFeeData use ho raha hai,
+            // taaki ek hi month (APR/MAY/JUN..) ke liye do sessions ka data
+            // aane par bhi header sirf ek baar dikhe.
+            final groups = controller.groupedFeeData;
             return SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                       (context, i) {
-                    final item = controller.feeDataList[i];
+                    final group = groups[i];
                     return _MonthBlock(
-                      item: item,
+                      group: group,
                       controller: controller,
                       index: i,
                     );
                   },
-                  childCount: controller.feeDataList.length,
+                  childCount: groups.length,
                 ),
               ),
             );
@@ -340,7 +344,7 @@ class _SummaryStrip extends StatelessWidget {
           border: Border.all(color: _DS.border, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withOpacity(0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -446,21 +450,52 @@ class _SummaryPill extends StatelessWidget {
   }
 }
 
-// ── Month Block (header + 3 cards) ───────────────────────────────────────────
+
 class _MonthBlock extends StatelessWidget {
-  final SessionMonthWiseFee item;
+  final SessionMonthWiseFeeGroup group;
   final SessionMonthWiseFeeController controller;
   final int index;
 
   const _MonthBlock({
-    required this.item,
+    required this.group,
     required this.controller,
     required this.index,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool isCurrentMonth = item.tillMonth == DateTime.now().month;
+    final bool isCurrentMonth = group.tillMonth == DateTime.now().month;
+
+    final currentItem = group.entries.first;
+
+
+    final double dueComputed =
+        currentItem.totalSchoolDue + currentItem.totalTransportDue;
+    final double advanceComputed =
+        currentItem.totalSchoolAdvance + currentItem.totalTransportAdvance;
+
+    // ── Total Paid: SAB sessions ka ek hi card, andar breakdown lines ──────
+    final double totalPaidSum = group.entries
+        .fold<double>(0.0, (sum, e) => sum + e.totalPaid);
+
+    final List<_SubLineItem> paidSubLines = [];
+    final List<_DialogRow> paidDialogRows = [];
+    for (final e in group.entries) {
+      final sessionTag = (e.session ?? '').isEmpty ? '' : ' ${e.session}';
+      paidSubLines.add(_SubLineItem(
+        'School Fees$sessionTag',
+        controller.fmt(e.totalSchoolFeePaid),
+      ));
+      paidSubLines.add(_SubLineItem(
+        'Transport Fees$sessionTag',
+        controller.fmt(e.totalTransportFeePaid),
+      ));
+
+      paidDialogRows.add(_DialogRow('Session', e.session ?? '-'));
+      paidDialogRows.add(_DialogRow('Total Paid', controller.fmt(e.totalPaid)));
+      paidDialogRows.add(_DialogRow('School Fee Paid', controller.fmt(e.totalSchoolFeePaid)));
+      paidDialogRows.add(_DialogRow('Transport Fee Paid', controller.fmt(e.totalTransportFeePaid)));
+    }
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -478,84 +513,74 @@ class _MonthBlock extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Month label
+            // Month label — is group ke liye sirf ek baar
             _MonthHeader(
-              monthName: item.monthName.toUpperCase(),
+              monthName: group.monthName.toUpperCase(),
               isCurrentMonth: isCurrentMonth,
             ),
             SizedBox(height: 10.h),
-            // 3 cards in a row
-            Row(
-              children: [
-                // Total Fee
-                Expanded(
-                  child: _FeeCard(
-                    title: 'Total Fee',
-                    total: controller.fmt(item.totalFee),
-                    line1Label: 'School Fees',
-                    line1Value: controller.fmt(item.totalSchoolFee),
-                    line2Label: 'Transport Fees',
-                    line2Value: controller.fmt(item.totalTransportFee),
-                    gradient: const [Color(0xFF22C55E), Color(0xFF15803D)],
-                    glowColor: _DS.green,
-                    // zoom dialog data
-                    dialogRows: [
-                      _DialogRow('Total Fee', controller.fmt(item.totalFee)),
-                      _DialogRow('School Fee', controller.fmt(item.totalSchoolFee)),
-                      _DialogRow('Transport Fee', controller.fmt(item.totalTransportFee)),
-                      _DialogRow('Net Fee Amount', controller.fmt(item.totalNetFeeAmount)),
-                      _DialogRow('School Discount', controller.fmt(item.totalSchoolDiscount)),
-                      _DialogRow('Transport Discount', controller.fmt(item.totalTransportDiscount)),
-                      _DialogRow('Total Discount', controller.fmt(item.totalDiscount)),
-                    ],
+
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _FeeCard(
+                      title: '💰 Total Fee',
+                      total: controller.fmt(currentItem.totalFee),
+                      subLines: [
+                        _SubLineItem('School Fees', controller.fmt(currentItem.totalNetSchoolFee)),
+                        _SubLineItem('Transport Fees', controller.fmt(currentItem.totalNetTransportFee)),
+                      ],
+                      gradient: const [Color(0xFF1F4A3D), Color(0xFF16362C)],
+                      glowColor: _DS.green,
+                      dialogRows: [
+                        _DialogRow('Total Fee', controller.fmt(currentItem.totalFee)),
+                        _DialogRow('School Fee (Net)', controller.fmt(currentItem.totalNetSchoolFee)),
+                        _DialogRow('Transport Fee (Net)', controller.fmt(currentItem.totalNetTransportFee)),
+                        _DialogRow('School Fee (Gross)', controller.fmt(currentItem.totalSchoolFee)),
+                        _DialogRow('Transport Fee (Gross)', controller.fmt(currentItem.totalTransportFee)),
+                        _DialogRow('School Discount', controller.fmt(currentItem.totalSchoolDiscount)),
+                        _DialogRow('Transport Discount', controller.fmt(currentItem.totalTransportDiscount)),
+                        _DialogRow('Total Discount', controller.fmt(currentItem.totalDiscount)),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(width: 8.w),
-                // Total Paid
-                Expanded(
-                  child: _FeeCard(
-                    title: 'Total Paid',
-                    total: controller.fmt(item.totalPaid),
-                    line1Label: 'School Fees',
-                    line1Value: controller.fmt(item.totalSchoolFeePaid),
-                    line2Label: 'Transport Fees',
-                    line2Value: controller.fmt(item.totalTransportFeePaid),
-                    gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                    glowColor: _DS.blue,
-                    dialogRows: [
-                      _DialogRow('Total Paid', controller.fmt(item.totalPaid)),
-                      _DialogRow('School Fee Paid', controller.fmt(item.totalSchoolFeePaid)),
-                      _DialogRow('Transport Fee Paid', controller.fmt(item.totalTransportFeePaid)),
-                      _DialogRow('Total Paid Fee', controller.fmt(item.totalPaidFee)),
-                      _DialogRow('Grand Total Fee', controller.fmt(item.grandTotalFee)),
-                    ],
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: _FeeCard(
+                      title: '✅ Total Paid',
+                      total: controller.fmt(totalPaidSum),
+                      subLines: paidSubLines,
+                      gradient: const [Color(0xFF23414F), Color(0xFF1A303A)],
+                      glowColor: _DS.blue,
+                      dialogRows: paidDialogRows,
+                    ),
                   ),
-                ),
-                SizedBox(width: 8.w),
-                // Total Due / Advance
-                Expanded(
-                  child: _FeeCard(
-                    title: 'Due / Advance',
-                    total:
-                    '${controller.fmt(item.totalDue)} /\n${controller.fmt(item.totalAdvance)}',
-                    line1Label: 'School Due',
-                    line1Value: controller.fmt(item.totalSchoolDue),
-                    line2Label: 'Transport Due',
-                    line2Value: controller.fmt(item.totalTransportDue),
-                    gradient: const [Color(0xFFFB923C), Color(0xFFEA580C)],
-                    glowColor: _DS.orange,
-                    dialogRows: [
-                      _DialogRow('Total Due', controller.fmt(item.totalDue)),
-                      _DialogRow('School Due', controller.fmt(item.totalSchoolDue)),
-                      _DialogRow('Transport Due', controller.fmt(item.totalTransportDue)),
-                      _DialogRow('Total Advance', controller.fmt(item.totalAdvance)),
-                      _DialogRow('School Advance', controller.fmt(item.totalSchoolAdvance)),
-                      _DialogRow('Transport Advance', controller.fmt(item.totalTransportAdvance)),
-                      _DialogRow('Due Amount', controller.fmt(item.totalDueAmount)),
-                    ],
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: _FeeCard(
+                      title: '⏳ Due / Advance',
+                      total:
+                      '${controller.fmt(dueComputed)} /\n${controller.fmt(advanceComputed)}',
+                      subLines: [
+                        _SubLineItem('School Due', controller.fmt(currentItem.totalSchoolDue)),
+                        _SubLineItem('Transport Due', controller.fmt(currentItem.totalTransportDue)),
+                      ],
+                      gradient: const [Color(0xFF4A2E22), Color(0xFF361F17)],
+                      glowColor: _DS.orange,
+                      dialogRows: [
+                        _DialogRow('Total Due', controller.fmt(dueComputed)),
+                        _DialogRow('School Due', controller.fmt(currentItem.totalSchoolDue)),
+                        _DialogRow('Transport Due', controller.fmt(currentItem.totalTransportDue)),
+                        _DialogRow('Total Advance', controller.fmt(advanceComputed)),
+                        _DialogRow('School Advance', controller.fmt(currentItem.totalSchoolAdvance)),
+                        _DialogRow('Transport Advance', controller.fmt(currentItem.totalTransportAdvance)),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -641,12 +666,18 @@ class _DialogRow {
   const _DialogRow(this.label, this.value);
 }
 
+// ── Sub-line item (used for the variable-length breakdown list inside a card) ─
+class _SubLineItem {
+  final String label;
+  final String value;
+  const _SubLineItem(this.label, this.value);
+}
+
 // ── Fee Card (tappable → zoom bottom sheet) ───────────────────────────────────
 class _FeeCard extends StatefulWidget {
   final String title;
   final String total;
-  final String line1Label, line1Value;
-  final String line2Label, line2Value;
+  final List<_SubLineItem> subLines;
   final List<Color> gradient;
   final Color glowColor;
   final List<_DialogRow> dialogRows;
@@ -654,10 +685,7 @@ class _FeeCard extends StatefulWidget {
   const _FeeCard({
     required this.title,
     required this.total,
-    required this.line1Label,
-    required this.line1Value,
-    required this.line2Label,
-    required this.line2Value,
+    required this.subLines,
     required this.gradient,
     required this.glowColor,
     required this.dialogRows,
@@ -786,9 +814,16 @@ class _FeeCardState extends State<_FeeCard>
                 ),
               ),
               SizedBox(height: 6.h),
-              _SubLine(label: widget.line1Label, value: widget.line1Value),
-              SizedBox(height: 3.h),
-              _SubLine(label: widget.line2Label, value: widget.line2Value),
+              // ── Breakdown lines (1..N) — Total Paid ke case mein har
+              // session ki School/Transport line yahin ek ke niche ek aati
+              // hai, total upar sabka SUM hota hai.
+              for (int i = 0; i < widget.subLines.length; i++) ...[
+                if (i > 0) SizedBox(height: 3.h),
+                _SubLine(
+                  label: widget.subLines[i].label,
+                  value: widget.subLines[i].value,
+                ),
+              ],
             ],
           ),
         ),
@@ -815,129 +850,142 @@ class _ZoomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 20.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E1923),
-        borderRadius: BorderRadius.circular(26.r),
-        border: Border.all(color: glowColor.withOpacity(0.30), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: glowColor.withOpacity(0.20),
-            blurRadius: 32,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          SizedBox(height: 12.h),
-          Center(
-            child: Container(
-              width: 38.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: glowColor.withOpacity(0.40),
-                borderRadius: BorderRadius.circular(4.r),
-              ),
-            ),
-          ),
-          SizedBox(height: 18.h),
+    // Sheet ki height screen ke max 85% tak hi jaane deni hai — agar rows
+    // (jaise Total Paid mein 2+ sessions ka breakdown) is se zyada jagah
+    // maangein, to sirf woh section andar scroll hoga, poora sheet overflow
+    // nahi karega (yehi wo bug tha jo tumhare log mein dikha).
+    final maxSheetHeight = MediaQuery.of(context).size.height * 0.85;
 
-          // Header card
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 16.w),
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18.r),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: gradient,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: glowColor.withOpacity(0.35),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+      child: Container(
+        margin: EdgeInsets.fromLTRB(12.w, 0, 12.w, 20.h),
+        decoration: BoxDecoration(
+          color: _DS.card,
+          borderRadius: BorderRadius.circular(26.r),
+          border: Border.all(color: glowColor.withOpacity(0.30), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: glowColor.withOpacity(0.20),
+              blurRadius: 32,
+              offset: const Offset(0, -6),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white.withOpacity(0.85),
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      FittedBox(
-                        child: Text(
-                          total,
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            SizedBox(height: 12.h),
+            Center(
+              child: Container(
+                width: 38.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: glowColor.withOpacity(0.40),
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 18.h),
+
+            // Header card
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 16.w),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18.r),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: gradient,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: glowColor.withOpacity(0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
                           style: TextStyle(
-                            fontSize: 28.sp,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            height: 1.15,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white.withOpacity(0.85),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.all(10.r),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.account_balance_wallet_rounded,
-                    color: Colors.white,
-                    size: 22.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 16.h),
-
-          // Detail rows
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Column(
-              children: rows.asMap().entries.map((entry) {
-                final isLast = entry.key == rows.length - 1;
-                return Column(
-                  children: [
-                    _DetailRow(
-                      row: entry.value,
-                      glowColor: glowColor,
+                        SizedBox(height: 4.h),
+                        FittedBox(
+                          child: Text(
+                            total,
+                            style: TextStyle(
+                              fontSize: 28.sp,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              height: 1.15,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    if (!isLast)
-                      Divider(
-                        color: glowColor.withOpacity(0.10),
-                        height: 1,
-                        thickness: 1,
-                      ),
-                  ],
-                );
-              }).toList(),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.18),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.account_balance_wallet_rounded,
+                      color: Colors.white,
+                      size: 22.sp,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          SizedBox(height: 24.h),
-        ],
+            SizedBox(height: 16.h),
+
+            // Detail rows — jitni bhi ho (sessions badhne par rows badhti
+            // hain), yeh section apne aap andar scroll ho jaata hai instead
+            // of overflowing the sheet.
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Column(
+                  children: rows.asMap().entries.map((entry) {
+                    final isLast = entry.key == rows.length - 1;
+                    return Column(
+                      children: [
+                        _DetailRow(
+                          row: entry.value,
+                          glowColor: glowColor,
+                        ),
+                        if (!isLast)
+                          Divider(
+                            color: glowColor.withOpacity(0.10),
+                            height: 1,
+                            thickness: 1,
+                          ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 24.h),
+          ],
+        ),
       ),
     );
   }
@@ -968,7 +1016,7 @@ class _DetailRow extends StatelessWidget {
               row.label,
               style: TextStyle(
                 fontSize: 13.sp,
-                color: const Color(0xB3FFFFFF),
+                color: _DS.white70,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -977,7 +1025,7 @@ class _DetailRow extends StatelessWidget {
             row.value,
             style: TextStyle(
               fontSize: 13.sp,
-              color: Colors.white,
+              color: _DS.white,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1235,8 +1283,8 @@ class _ShimmerSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFF0E1923),
-      highlightColor: const Color(0xFF1C3248),
+      baseColor: const Color(0xFFF3EDF7),
+      highlightColor: const Color(0xFFFFFFFF),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 18.h),
         child: Column(

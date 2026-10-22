@@ -28,6 +28,35 @@ class SessionMonthWiseFeeController extends GetxController {
 
   RxList<SessionMonthWiseFee> feeDataList = <SessionMonthWiseFee>[].obs;
 
+  /// Groups the flat API list by MonthName so a month (APR/MAY/JUN..) is
+  /// shown only once, even when the API returns rows for more than one
+  /// session for that same month.
+  ///
+  /// IMPORTANT: entries are kept in the SAME order the API returned them
+  /// (i.e. NOT re-sorted by selectedSession). This matches the live site:
+  /// the "Total Fee" and "Total Due / Advance" cards always read from
+  /// group.entries.first — the first session-row the API sent for that
+  /// month — regardless of which session is picked in the dropdown.
+  /// "Total Paid" is the only card that combines every session, so its
+  /// value/breakdown is order-independent.
+  List<SessionMonthWiseFeeGroup> get groupedFeeData {
+    final Map<String, SessionMonthWiseFeeGroup> grouped = {};
+
+    for (final item in feeDataList) {
+      final key = item.monthName;
+      if (!grouped.containsKey(key)) {
+        grouped[key] = SessionMonthWiseFeeGroup(
+          monthName: item.monthName,
+          tillMonth: item.tillMonth,
+          entries: [],
+        );
+      }
+      grouped[key]!.entries.add(item);
+    }
+
+    return grouped.values.toList();
+  }
+
   // ── Summary totals (computed from feeDataList) ───────────────────────────
   RxDouble summaryTotalFee = 0.0.obs;
   RxDouble summaryTotalPaid = 0.0.obs;
@@ -181,6 +210,8 @@ class SessionMonthWiseFeeController extends GetxController {
   }
 
   /// Current month (tillMonth == now.month) sabse upar aaye, baaki same order.
+  /// Uses List.sort's stable ordering, so within the same month the
+  /// session-row order coming from the API is preserved.
   void _sortCurrentMonthFirst() {
     final currentMonth = DateTime.now().month;
     final list = [...feeDataList];
@@ -192,13 +223,19 @@ class SessionMonthWiseFeeController extends GetxController {
     feeDataList.value = list;
   }
 
+  /// NOTE: TotalDue / TotalAdvance fields in the API response are currently
+  /// always 0 (a data quirk on the backend) — actual due/advance is only
+  /// correct via (SchoolDue+TransportDue) / (SchoolAdvance+TransportAdvance).
+  /// The summary strip therefore sums those computed values, same as each
+  /// month's card does, instead of trusting the raw TotalDue/TotalAdvance
+  /// fields.
   void _computeSummary() {
     double fee = 0, paid = 0, due = 0, advance = 0;
     for (final item in feeDataList) {
       fee += item.totalFee;
       paid += item.totalPaid;
-      due += item.totalDue;
-      advance += item.totalAdvance;
+      due += (item.totalSchoolDue + item.totalTransportDue);
+      advance += (item.totalSchoolAdvance + item.totalTransportAdvance);
     }
     summaryTotalFee.value = fee;
     summaryTotalPaid.value = paid;
@@ -214,13 +251,30 @@ class SessionMonthWiseFeeController extends GetxController {
   }
 
   /// Formatted currency helper used by the UI.
+  /// Indian numbering format: last 3 digits ek group, uske baad har 2-2
+  /// digits ka group (e.g. 8435055 -> 84,35,055; 100000 -> 1,00,000).
+  /// ".00" nahi dikhta — hamesha whole number.
   String fmt(double value) {
-    // Format with 2 decimal places + comma separators
-    final parts = value.toStringAsFixed(2).split('.');
-    parts[0] = parts[0].replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-          (m) => ',',
-    );
-    return parts.join('.');
+    final isNegative = value < 0;
+    final wholeNumber = value.abs().round().toString();
+
+    String formatted;
+    if (wholeNumber.length <= 3) {
+      formatted = wholeNumber;
+    } else {
+      final lastThree = wholeNumber.substring(wholeNumber.length - 3);
+      final remaining = wholeNumber.substring(0, wholeNumber.length - 3);
+      final buffer = StringBuffer();
+      for (int i = 0; i < remaining.length; i++) {
+        final posFromEnd = remaining.length - i;
+        buffer.write(remaining[i]);
+        if (posFromEnd > 1 && posFromEnd % 2 == 1) {
+          buffer.write(',');
+        }
+      }
+      formatted = '${buffer.toString()},$lastThree';
+    }
+
+    return isNegative ? '-$formatted' : formatted;
   }
 }

@@ -17,7 +17,8 @@ class DashboardTile {
   final IconData image;
   final Color color;
   final List<Color>? gradientColors;
-  final bool isNavTile; // ← new: true means arrow card, no count
+  final bool isNavTile; // true means arrow card, no count
+  final String? navRoute; // route this nav tile should push to
 
   DashboardTile({
     required this.name,
@@ -26,6 +27,7 @@ class DashboardTile {
     required this.color,
     this.gradientColors,
     this.isNavTile = false,
+    this.navRoute,
   });
 }
 
@@ -299,6 +301,18 @@ class DashboardScreenController extends GetxController {
         color: const Color(0xFF0F766E),
         gradientColors: const [Color(0xFF0D9488), Color(0xFF134E4A)],
         isNavTile: true, // arrow card — no count shown
+        navRoute: RouteName.session_month_wise_data,
+      ),
+
+      // ─── Till Month Fee Status Report Nav Card ─────────────────────────────
+      DashboardTile(
+        name: "Till Month Fee\nStatus Report",
+        count: "",
+        image: Icons.fact_check_rounded,
+        color: const Color(0xFFB45309),
+        gradientColors: const [Color(0xFFF59E0B), Color(0xFF92400E)],
+        isNavTile: true, // arrow card — no count shown
+        navRoute: RouteName.till_month_fee_status_screen,
       ),
     ];
   }
@@ -307,10 +321,11 @@ class DashboardScreenController extends GetxController {
     if (index < 0 || index >= filteredList.length) return;
     final selected = filteredList[index];
 
-    // ─── All Month Report card → navigate to session_month_wise_data ──────
+    // ─── Nav tiles → navigate to their configured route ────────────────────
     if (selected.isNavTile) {
+      final route = selected.navRoute ?? RouteName.session_month_wise_data;
       Get.toNamed(
-        RouteName.session_month_wise_data,
+        route,
         arguments: {"url": secUrl.value},
       );
       return;
