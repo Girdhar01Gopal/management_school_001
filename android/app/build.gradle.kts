@@ -18,13 +18,13 @@ val flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "
 
 // Load key.properties for signing configurations
 val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
+val keystorePropertiesFile = rootProject.file("keystore.properties")
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.reader().use { keystoreProperties.load(it) }
 }
 
 android {
-    namespace = "com.example.management_school"
+    namespace = "com.monteage.management_school"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -41,13 +41,13 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.management_school"
+        applicationId = "com.monteage.management_school"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = 35 // Set target SDK to 33
-        versionCode = 36
-        versionName = "1.0.36"
+        versionCode = 38
+        versionName = "1.0.38"
         multiDexEnabled = true
     }
 

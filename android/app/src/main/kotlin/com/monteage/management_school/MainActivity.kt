@@ -1,4 +1,4 @@
-package com.example.management_school
+package com.monteage.management_school
 
 import io.flutter.embedding.android.FlutterActivity
 
